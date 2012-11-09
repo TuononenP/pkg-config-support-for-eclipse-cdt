@@ -33,6 +33,7 @@ import org.eclipse.ui.PlatformUI;
 public class PreferencePage extends FieldEditorPreferencePage
 implements IWorkbenchPreferencePage {
 
+	private PkgConfigBinPathFieldEditor pkgConfigBinEditor;
 	private PkgConfigPathListEditor configPathListEditor;
 	private LibDirFieldEditor libDirEditor;
 	
@@ -80,6 +81,11 @@ implements IWorkbenchPreferencePage {
 		vars.createVariable("PKG_CONFIG_PATH", PreferenceStore.getPkgConfigPath()); //$NON-NLS-1$
 		fUserSupplier.setWorkspaceEnvironment(vars);
 		
+		// create PKG_CONFIG_BIN environment variable
+		String pkgConfigBinEditorValue = this.pkgConfigBinEditor
+				.getStringValue();
+		PreferenceStore.setPkgConfigBin(pkgConfigBinEditorValue);
+
 		restartWorkspaceDialog();
 		
         return true;
@@ -119,6 +125,11 @@ implements IWorkbenchPreferencePage {
 	 * Creates field editors for the preference page.
 	 */
 	protected void createFieldEditors() {
+		// field PKG_CONFIG_BIN
+		this.pkgConfigBinEditor = new PkgConfigBinPathFieldEditor(
+				PreferenceConstants.PKG_CONFIG_BIN, Messages.PreferencePage_3,
+				getFieldEditorParent());
+		addField(this.pkgConfigBinEditor);
 		//list editor for PKG_CONFIG_PATH values
 		this.configPathListEditor = new PkgConfigPathListEditor(
 				PreferenceConstants.PKG_CONFIG_PATH, Messages.PreferencePage_1, 

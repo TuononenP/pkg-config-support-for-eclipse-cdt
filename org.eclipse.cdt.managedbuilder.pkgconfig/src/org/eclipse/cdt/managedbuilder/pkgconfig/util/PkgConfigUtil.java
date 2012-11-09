@@ -45,23 +45,21 @@ public class PkgConfigUtil {
 	 */
 	private static String getPkgOutput(String command, String pkg) {
 		ProcessBuilder pb = null;
-		String confPath = PreferenceStore.getPkgConfigPath();
-		if (OSDetector.isUnix() || OSDetector.isMac()) {
-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
-				confPath = confPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
-				pb = new ProcessBuilder("bash", "-c", confPath+ //$NON-NLS-1$ //$NON-NLS-2$
-						Separators.getFileSeparator()+PKG_CONFIG+" "+command+" "+pkg); //$NON-NLS-1$ //$NON-NLS-2$
-			} else {
-				pb = new ProcessBuilder("bash", "-c", PKG_CONFIG+" "+command+" "+pkg); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-			}
-		} else if (OSDetector.isWindows()) {
-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
-				pb = new ProcessBuilder("cmd", "/c", "\""+confPath+ //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-						Separators.getFileSeparator()+PKG_CONFIG+"\"", command, pkg);	//$NON-NLS-1$ 
-			} else {
-				pb = new ProcessBuilder("cmd", "/c", PKG_CONFIG, command, pkg);	//$NON-NLS-1$ //$NON-NLS-2$
-			}
+		String pkgConfigBinPath = PreferenceStore.getPkgConfigBinPath();
+		if (pkgConfigBinPath.isEmpty()) {
+			if (OSDetector.isWindows())
+				pkgConfigBinPath = PKG_CONFIG + ".exe"; //$NON-NLS-1$
+			else
+				pkgConfigBinPath = PKG_CONFIG;
 		}
+
+		if (OSDetector.isUnix() || OSDetector.isMac()) {
+			pb = new ProcessBuilder(
+					"bash", "-c", pkgConfigBinPath + " " + command + " " + pkg); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		} else if (OSDetector.isWindows()) {
+			pb = new ProcessBuilder("cmd", "/c", pkgConfigBinPath, command, pkg); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		Process p = null;
 		try {
 			if (pb != null) {
@@ -144,22 +142,19 @@ public class PkgConfigUtil {
 	 */
 	public static List<String> getAllPackages() {
 		ProcessBuilder pb = null;
-		String confPath = PreferenceStore.getPkgConfigPath();
+		String pkgConfigBinPath = PreferenceStore.getPkgConfigBinPath();
+		if (pkgConfigBinPath.isEmpty()) {
+			if (OSDetector.isWindows())
+				pkgConfigBinPath = PKG_CONFIG + ".exe"; //$NON-NLS-1$
+			else
+				pkgConfigBinPath = PKG_CONFIG;
+		}
 		if (OSDetector.isUnix() || OSDetector.isMac()) {
-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
-				confPath = confPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
-				pb = new ProcessBuilder("bash", "-c", confPath+ //$NON-NLS-1$ //$NON-NLS-2$
-						Separators.getFileSeparator()+PKG_CONFIG+" "+LIST_PACKAGES); //$NON-NLS-1$ 
-			} else {
-				pb = new ProcessBuilder("bash", "-c", PKG_CONFIG+" "+LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			}
+			pkgConfigBinPath = pkgConfigBinPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
+			pb = new ProcessBuilder("bash", "-c", pkgConfigBinPath + " " //$NON-NLS-1$ //$NON-NLS-2$  //$NON-NLS-3$
+					+ LIST_PACKAGES);
 		} else if (OSDetector.isWindows()) {
-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
-				pb = new ProcessBuilder("cmd", "/c", "\""+confPath+ //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-						Separators.getFileSeparator()+PKG_CONFIG+"\"", LIST_PACKAGES); //$NON-NLS-1$ 
-			} else {
-				pb = new ProcessBuilder("cmd", "/c", PKG_CONFIG, LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$
-			}
+			pb = new ProcessBuilder("cmd", "/c", pkgConfigBinPath, LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		try {
 			if (pb !=null) {

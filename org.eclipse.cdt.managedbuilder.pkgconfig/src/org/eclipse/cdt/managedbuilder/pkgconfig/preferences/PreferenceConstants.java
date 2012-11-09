@@ -18,5 +18,6 @@ public class PreferenceConstants {
 	
 	public static final String PKG_CONFIG_LIBDIR = "Replaces the" + //$NON-NLS-1$
 			" default pkg-config search directory."; //$NON-NLS-1$
-	
+
+	public static final String PKG_CONFIG_BIN = "Path to the pkg-config executable"; //$NON-NLS-1$
 }

@@ -54,6 +54,25 @@ public class PreferenceStore {
 	}
 	
 	/**
+	 * Set pkg-config bin to the preference store.
+	 * 
+	 * @param path
+	 *            The pkg-config bin.
+	 */
+	public static void setPkgConfigBin(String path) {
+		setPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_BIN, path);
+	}
+
+	/**
+	 * Get pkg-config bin path from the preference store.
+	 * 
+	 * @return pkg-config bin path.
+	 */
+	public static String getPkgConfigBinPath() {
+		return getPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_BIN);
+	}
+
+	/**
 	 * Get pkg-config path from the preference store.
 	 * 
 	 * @return pkg-config path.

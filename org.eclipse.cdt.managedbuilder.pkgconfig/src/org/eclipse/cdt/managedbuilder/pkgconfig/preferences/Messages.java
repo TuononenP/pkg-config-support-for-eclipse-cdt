@@ -20,6 +20,7 @@ public class Messages extends NLS {
 	public static String PreferencePage_0;
 	public static String PreferencePage_1;
 	public static String PreferencePage_2;
+	public static String PreferencePage_3;
 
 	static {
 		// initialize resource bundle
