@@ -11,6 +11,7 @@
 package org.eclipse.cdt.managedbuilder.pkgconfig.util;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Parses pkg-config utility output.
@@ -172,13 +173,13 @@ public class Parser {
 	}
 	
 	/**
-	 * Parse package list so that only package names are added to ArrayList.
+	 * Parse package list so that only package names are added to List.
 	 * 
 	 * @param packages
 	 * @return
 	 */
-	public static ArrayList<String> parsePackageList(ArrayList<String> packages) {
-		ArrayList<String> operated = new ArrayList<String>();
+	public static List<String> parsePackageList(List<String> packages) {
+		List<String> operated = new ArrayList<String>();
 		for (String s : packages) {
 			//cut the string after the first white space
 			int end = s.indexOf(" "); //$NON-NLS-1$
@@ -188,13 +189,13 @@ public class Parser {
 	}
 	
 	/**
-	 * Parse package list that only package descriptions are added to ArrayList.
+	 * Parse package list that only package descriptions are added to List.
 	 * 
 	 * @param packages
 	 * @return
 	 */
-	public static ArrayList<String> parseDescription(ArrayList<String> packages) {
-		ArrayList<String> operated = new ArrayList<String>();
+	public static List<String> parseDescription(List<String> packages) {
+		List<String> operated = new ArrayList<String>();
 		int ws, start = 0;
 		for (String s : packages) {
 			ws = s.indexOf(" "); //$NON-NLS-1$

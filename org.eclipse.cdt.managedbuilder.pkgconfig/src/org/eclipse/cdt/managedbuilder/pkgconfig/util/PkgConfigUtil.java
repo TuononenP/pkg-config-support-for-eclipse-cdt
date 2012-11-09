@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.cdt.managedbuilder.pkgconfig.Activator;
 import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PreferenceStore;
@@ -141,7 +142,7 @@ public class PkgConfigUtil {
 	 * 
 	 * @return
 	 */
-	public static ArrayList<String> getAllPackages() {
+	public static List<String> getAllPackages() {
 		ProcessBuilder pb = null;
 		String confPath = PreferenceStore.getPkgConfigPath();
 		if (OSDetector.isUnix() || OSDetector.isMac()) {
@@ -166,7 +167,7 @@ public class PkgConfigUtil {
 				String line;
 				BufferedReader input = new BufferedReader
 						(new InputStreamReader(p.getInputStream()));
-				ArrayList<String> packageList = new ArrayList<String>();
+				List<String> packageList = new ArrayList<String>();
 				do {
 					line = input.readLine();
 					if (line != null) {

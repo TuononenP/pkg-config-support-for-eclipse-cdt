@@ -12,6 +12,7 @@ package org.eclipse.cdt.managedbuilder.pkgconfig.settings;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.CExternalSetting;
@@ -157,7 +158,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	private static ICLanguageSettingEntry[] formIncludePathEntries(String[] includes) {
-		ArrayList<ICLanguageSettingEntry> incPathEntries = new ArrayList<ICLanguageSettingEntry>();
+		List<ICLanguageSettingEntry> incPathEntries = new ArrayList<ICLanguageSettingEntry>();
 		for(String inc : includes) {
 			ICIncludePathEntry incPathEntry = new CIncludePathEntry(new Path(inc),
 					ICSettingEntry.INCLUDE_PATH);
@@ -172,7 +173,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	private static ICLanguageSettingEntry[] formLibraryFileEntries(String[] libs) {
-		ArrayList<ICLanguageSettingEntry> libEntries = new ArrayList<ICLanguageSettingEntry>();
+		List<ICLanguageSettingEntry> libEntries = new ArrayList<ICLanguageSettingEntry>();
 		for(String lib : libs) {
 			CLibraryFileEntry libFileEntry = new CLibraryFileEntry(lib,
 					ICSettingEntry.LIBRARY_FILE);
@@ -187,7 +188,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	private static ICLanguageSettingEntry[] formLibraryPathEntries(String[] libPaths) {
-		ArrayList<ICLanguageSettingEntry> libPathEntries = new ArrayList<ICLanguageSettingEntry>();
+		List<ICLanguageSettingEntry> libPathEntries = new ArrayList<ICLanguageSettingEntry>();
 		for(String libPath : libPaths) {
 			CLibraryPathEntry libPathEntry = new CLibraryPathEntry(new Path(libPath),
 					ICSettingEntry.LIBRARY_PATH);
@@ -202,7 +203,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	private static String[] getIncludePathsFromCheckedPackages(IProject proj) {
-		ArrayList<String> includeList = new ArrayList<String>();
+		List<String> includeList = new ArrayList<String>();
 		String[] pkgs = getCheckedPackageNames(proj);
 		String cflags = null;
 		String[] includeArray = null;
@@ -222,7 +223,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	private static String[] getLibraryFilesFromCheckedPackages(IProject proj) {
-		ArrayList<String> libList = new ArrayList<String>();
+		List<String> libList = new ArrayList<String>();
 		String[] pkgs = getCheckedPackageNames(proj);
 		String libs = null;
 		String[] libArray = null;
@@ -242,7 +243,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	private static String[] getLibraryPathsFromCheckedPackages(IProject proj) {
-		ArrayList<String> libPathList = new ArrayList<String>();
+		List<String> libPathList = new ArrayList<String>();
 		String[] pkgs = getCheckedPackageNames(proj);
 		String libPaths = null;
 		String[] libPathArray = null;
@@ -262,7 +263,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @return
 	 */
 	static String[] getOtherFlagsFromCheckedPackages(IProject proj) {
-		ArrayList<String> otherFlagList = new ArrayList<String>();
+		List<String> otherFlagList = new ArrayList<String>();
 		String[] pkgs = getCheckedPackageNames(proj);
 		String cflags = null;
 		String[] otherFlagArray = null;
@@ -326,7 +327,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	private static String[] getCheckedPackageNames(IProject proj) {
 		ICStorageElement pkgStorage = getPackageStorage(proj);
 		String[] pkgNames = pkgStorage.getAttributeNames();
-		ArrayList<String> pkgs = new ArrayList<String>();
+		List<String> pkgs = new ArrayList<String>();
 		String value = null;
 		for(String pkgName : pkgNames) {
 			value = pkgStorage.getAttribute(pkgName);
