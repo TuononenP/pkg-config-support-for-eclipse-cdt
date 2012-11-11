@@ -22,7 +22,7 @@ import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PreferenceStore;
 /**
  * Runs pkg-config utility in the command line and outputs necessary
  * options to build the given package.
- *
+ * 
  */
 public class PkgConfigUtil {
 
@@ -39,13 +39,33 @@ public class PkgConfigUtil {
 	 * Get options needed to build the given package.
 	 * Does not like spaces on paths except that getAllPackages seem to work.
 	 * 
-	 * @param command
+	 * @param pkgConfigOptions
+	 *            Pkg-config options
 	 * @param pkg
 	 * @return
 	 */
-	private static String getPkgOutput(String command, String pkg) {
+	private static String getPkgOutput(String pkgConfigOptions) {
+		List<String> pkgOutputs = getPkgOutputs(pkgConfigOptions);
+		if (pkgOutputs.isEmpty())
+			return null;
+		return pkgOutputs.get(0);
+	}
+
+	/**
+	 * Get options needed to build the given package. Does not like spaces on
+	 * paths except that getAllPackages seem to work.
+	 * 
+	 * @param pkgconfigOptions
+	 *            Pkg-config options as --list-all, --libs...
+	 * @param pkg
+	 *            Pkg-config library name. In case of --list-all option, it must
+	 *            be set to null
+	 * @return pkg-config command results as a list of string
+	 */
+	private static List<String> getPkgOutputs(String pkgconfigOptions) {
 		ProcessBuilder pb = null;
 		String pkgConfigBinPath = PreferenceStore.getPkgConfigBinPath();
+
 		if (pkgConfigBinPath.isEmpty()) {
 			if (OSDetector.isWindows())
 				pkgConfigBinPath = PKG_CONFIG + ".exe"; //$NON-NLS-1$
@@ -53,36 +73,80 @@ public class PkgConfigUtil {
 				pkgConfigBinPath = PKG_CONFIG;
 		}
 
-		if (OSDetector.isUnix() || OSDetector.isMac()) {
-			pb = new ProcessBuilder(
-					"bash", "-c", pkgConfigBinPath + " " + command + " " + pkg); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		} else if (OSDetector.isWindows()) {
-			pb = new ProcessBuilder("cmd", "/c", pkgConfigBinPath, command, pkg); //$NON-NLS-1$ //$NON-NLS-2$
+		String pkgConfigPath = PreferenceStore.getPkgConfigPath();
+		StringBuffer pkgConfigCmd = new StringBuffer();
+
+		if (pkgConfigPath != null && !pkgConfigPath.isEmpty()) {
+			pkgConfigPath = pkgConfigPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
+			if (OSDetector.isWindows()) {
+				pkgConfigCmd
+						.append(" set PKG_CONFIG_PATH=" + pkgConfigPath + " ");//$NON-NLS-1$ //$NON-NLS-2$
+			} else {
+				pkgConfigCmd.append(" PKG_CONFIG_PATH=" + pkgConfigPath + " ");//$NON-NLS-1$ //$NON-NLS-2$
+			}
 		}
 
-		Process p = null;
-		try {
-			if (pb != null) {
-				p = pb.start();
+		String pkgConfigLibDirPath = PreferenceStore.getPkgConfigLibDir();
+		if (pkgConfigLibDirPath != null && !pkgConfigLibDirPath.isEmpty()) {
+			pkgConfigLibDirPath = pkgConfigLibDirPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
+			if (OSDetector.isWindows()) {
+				if (pkgConfigPath != null && !pkgConfigPath.isEmpty())
+					pkgConfigCmd.append("&&"); //$NON-NLS-1$
+				pkgConfigCmd
+						.append(" set PKG_CONFIG_LIBDIR=" + pkgConfigLibDirPath + " ");//$NON-NLS-1$ //$NON-NLS-2$
+			} else {
+				pkgConfigCmd
+						.append(" PKG_CONFIG_LIBDIR=" + pkgConfigLibDirPath + " ");//$NON-NLS-1$ //$NON-NLS-2$
 			}
-		} catch (IOException e) {
-			Activator.getDefault().log(e, "Starting a process (executing a command line script) failed."); //$NON-NLS-1$
 		}
-		if (p != null) {
+		pkgConfigCmd.append(pkgConfigBinPath);
+		if (pkgconfigOptions != null && !pkgconfigOptions.isEmpty())
+			pkgConfigCmd.append(" " + pkgconfigOptions);//$NON-NLS-1$
+
+		if (OSDetector.isWindows()) {
+			// For Windows the command should look like :
+			// cmd /c 'PKG_CONFIG_PATH=/path/to/something pkg-config
+			// --list-all'
+			pb = new ProcessBuilder("cmd", "/c", pkgConfigCmd.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			// For Unix/Mac the command should look like :
+			// bash -c 'PKG_CONFIG_PATH=/path/to/something pkg-config
+			// --list-all'
+			pb = new ProcessBuilder("bash", "-c", pkgConfigCmd.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		return runCommand(pb);
+	}
+
+	/**
+	 * Run the process and get the results as string array.
+	 * 
+	 * @param pb
+	 *            Process builder
+	 * @return Array of process results
+	 */
+	private static List<String> runCommand(ProcessBuilder pb) {
+		List<String> results = new ArrayList<String>();
+
+		try {
+			Process p = pb.start();
 			String line;
-			BufferedReader input = new BufferedReader
-					(new InputStreamReader(p.getInputStream()));
-			try {
+			BufferedReader input = new BufferedReader(new InputStreamReader(
+					p.getInputStream()));
+			do {
 				line = input.readLine();
 				if (line != null) {
-					return line;
+					results.add(line);
 				}
-				input.close();
-			} catch (IOException e) {
-				Activator.getDefault().log(e, "Reading a line from the input failed."); //$NON-NLS-1$
-			}
+			} while (line != null);
+			input.close();
+		} catch (IOException e) {
+			Activator
+					.getDefault()
+					.log(e,
+							"Starting a process (executing a command line script) failed."); //$NON-NLS-1$
 		}
-		return null;
+		return results;
 	}
 	
 	/**
@@ -92,7 +156,7 @@ public class PkgConfigUtil {
 	 * @return
 	 */
 	public static String getAll(String pkg) {
-		return getPkgOutput(OUTPUT_ALL, pkg);
+		return getPkgOutput(OUTPUT_ALL + " " + pkg); //$NON-NLS-1$
 	}
 	
 	/**
@@ -102,7 +166,7 @@ public class PkgConfigUtil {
 	 * @return
 	 */
 	public static String getLibs(String pkg) {
-		return getPkgOutput(OUTPUT_LIBS, pkg);
+		return getPkgOutput(OUTPUT_LIBS + " " + pkg); //$NON-NLS-1$
 	}
 	
 	/**
@@ -112,7 +176,7 @@ public class PkgConfigUtil {
 	 * @return
 	 */
 	public static String getLibPathsOnly(String pkg) {
-		return getPkgOutput(OUTPUT_ONLY_LIB_PATHS, pkg);
+		return getPkgOutput(OUTPUT_ONLY_LIB_PATHS + " " + pkg); //$NON-NLS-1$
 	}
 
 	/**
@@ -122,7 +186,7 @@ public class PkgConfigUtil {
 	 * @return
 	 */
 	public static String getLibFilesOnly(String pkg) {
-		return getPkgOutput(OUTPUT_ONLY_LIB_FILES, pkg);
+		return getPkgOutput(OUTPUT_ONLY_LIB_FILES + " " + pkg); //$NON-NLS-1$
 	}
 	
 	/**
@@ -132,50 +196,17 @@ public class PkgConfigUtil {
 	 * @return
 	 */
 	public static String getCflags(String pkg) {
-		return getPkgOutput(OUTPUT_CFLAGS, pkg);
+		return getPkgOutput(OUTPUT_CFLAGS + " " + pkg); //$NON-NLS-1$
 	}
 	
 	/**
-	 * Get all packages that pkg-config utility finds (package name with description).
+	 * Get all packages that pkg-config utility finds (package name with
+	 * description).
 	 * 
 	 * @return
 	 */
 	public static List<String> getAllPackages() {
-		ProcessBuilder pb = null;
-		String pkgConfigBinPath = PreferenceStore.getPkgConfigBinPath();
-		if (pkgConfigBinPath.isEmpty()) {
-			if (OSDetector.isWindows())
-				pkgConfigBinPath = PKG_CONFIG + ".exe"; //$NON-NLS-1$
-			else
-				pkgConfigBinPath = PKG_CONFIG;
-		}
-		if (OSDetector.isUnix() || OSDetector.isMac()) {
-			pkgConfigBinPath = pkgConfigBinPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
-			pb = new ProcessBuilder("bash", "-c", pkgConfigBinPath + " " //$NON-NLS-1$ //$NON-NLS-2$  //$NON-NLS-3$
-					+ LIST_PACKAGES);
-		} else if (OSDetector.isWindows()) {
-			pb = new ProcessBuilder("cmd", "/c", pkgConfigBinPath, LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		try {
-			if (pb !=null) {
-				Process p = pb.start();
-				String line;
-				BufferedReader input = new BufferedReader
-						(new InputStreamReader(p.getInputStream()));
-				List<String> packageList = new ArrayList<String>();
-				do {
-					line = input.readLine();
-					if (line != null) {
-						packageList.add(line);
-					}
-				} while(line != null);
-				input.close();
-				return packageList;
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
+		return getPkgOutputs(LIST_PACKAGES);
 	}
 	
 }
