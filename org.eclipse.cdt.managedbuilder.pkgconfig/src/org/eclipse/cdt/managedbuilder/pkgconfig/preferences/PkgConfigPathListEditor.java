@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Petri Tuononen - Initial implementation
+ * Melanie Bats   - Pkg-config variables can be set by project
  *******************************************************************************/
 package org.eclipse.cdt.managedbuilder.pkgconfig.preferences;
 
@@ -19,7 +20,6 @@ import org.eclipse.swt.widgets.Text;
 /**
  * New implementation of PkgConfigListEditor.
  * Used to select PKG_CONFIG_PATH values from the dialog.
- * 
  */
 public class PkgConfigPathListEditor extends PkgConfigListEditor {
 
@@ -30,7 +30,7 @@ public class PkgConfigPathListEditor extends PkgConfigListEditor {
 	 * @param labelText the label text of the field editor
 	 * @param parent the parent of the field editor's control
 	 */
-	PkgConfigPathListEditor(String name, String labelText, Composite parent) {
+	public PkgConfigPathListEditor(String name, String labelText, Composite parent) {
 		super(name, labelText, parent);
 	}
 	
@@ -63,8 +63,6 @@ public class PkgConfigPathListEditor extends PkgConfigListEditor {
 					}
 				}					
 			}
-			//add a new PKG_CONFIG_PATH to the preference store
-			PreferenceStore.appendPkgConfigPath(dir);
 			return dir;
 		}
 		return null;
@@ -79,11 +77,21 @@ public class PkgConfigPathListEditor extends PkgConfigListEditor {
         setPresentsDefaultValue(false);
         String[] selected = incList.getSelection();
         for (String s : selected) {
-            //remove PKG_CONFIG_PATH from the preference store
-            PreferenceStore.removePkgConfigPath(s);
     		incList.remove(s);
     		selectionChanged();
         }
 	}
-	
+
+	/**
+	 * Get the pkg config paths.
+	 * 
+	 * @return Array of pkg-config paths
+	 */
+	public String[] getPkgConfigPaths() {
+		return getList().getItems();
+	}
+
+	public void setData(String[] pkgConfigs) {
+		getList().setItems(pkgConfigs);
+	}
 }

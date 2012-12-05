@@ -19,18 +19,18 @@ import java.util.List;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.Parser;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.PkgConfigUtil;
 
-public enum DataModelProvider {
-	INSTANCE;
+public class DataModelProvider {
 
-	private List<DataModel> dms;
+	List<DataModel> dms;
 
 	/**
 	 * Initialize.
+	 * @param project Project
 	 */
-	private DataModelProvider() {
+	DataModelProvider(String project) {
 		this.dms = new ArrayList<DataModel>();
 
-		List<String> packages = PkgConfigUtil.getAllPackages();
+		List<String> packages = PkgConfigUtil.getAllPackages(project);
 		List<String> pkgList = Parser.parsePackageList(packages);
 		List<String> nonSortedPkgList = Parser.parsePackageList(packages);
 		HashMap<Integer, Integer> origSortedIdx = new HashMap<Integer, Integer>();

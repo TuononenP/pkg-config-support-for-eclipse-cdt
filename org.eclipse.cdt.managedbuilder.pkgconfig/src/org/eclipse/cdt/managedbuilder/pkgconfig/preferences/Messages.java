@@ -15,6 +15,10 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
 
 	private static final String BUNDLE_NAME = "org.eclipse.cdt.managedbuilder.pkgconfig.preferences.messages"; //$NON-NLS-1$
+	public static String PkgConfigSettingsDialog_0;
+	public static String PkgConfigSettingsDialog_1;
+	public static String PkgConfigSettingsDialog_2;
+	public static String PkgConfigPropertyTab_0;
 	public static String PkgConfigPathListEditor_0;
 	public static String PkgConfigPathListEditor_1;
 	public static String PreferencePage_0;

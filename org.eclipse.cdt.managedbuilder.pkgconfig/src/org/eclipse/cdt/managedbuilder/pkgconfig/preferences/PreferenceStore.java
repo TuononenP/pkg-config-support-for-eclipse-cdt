@@ -12,7 +12,6 @@ package org.eclipse.cdt.managedbuilder.pkgconfig.preferences;
 
 import org.eclipse.cdt.managedbuilder.pkgconfig.Activator;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.ArrayUtil;
-import org.eclipse.cdt.managedbuilder.pkgconfig.util.Separators;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
@@ -22,6 +21,11 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
  * This class is not intended to be subclassed by clients.
  */
 public class PreferenceStore {
+
+	private static final String PATH_SEPARATOR = ";"; //$NON-NLS-1$
+	private static final String PKG_CONFIG_BIN = "PKG_CONFIG_BIN"; //$NON-NLS-1$
+	private static final String PKG_CONFIG_LIBDIR = "PKG_CONFIG_LIBDIR"; //$NON-NLS-1$
+	private static final String PKG_CONFIG_PATH = "PKG_CONFIG_PATH"; //$NON-NLS-1$
 
 	/**
 	 * Get the Pkg-config preference store.
@@ -52,15 +56,26 @@ public class PreferenceStore {
 	public static void setPreferenceStoreValue(String name, String value) {
 		getPreferenceStore().put(name, value);
 	}
-	
+
+	/**
+	 * Clear preference store value.
+	 * 
+	 * @param name
+	 *            the name of the preference
+	 */
+	public static void clearPreferenceStoreValue(String name) {
+		getPreferenceStore().put(name, ""); //$NON-NLS-1$
+	}
+
 	/**
 	 * Set pkg-config bin to the preference store.
 	 * 
 	 * @param path
 	 *            The pkg-config bin.
+	 * @param project
 	 */
-	public static void setPkgConfigBin(String path) {
-		setPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_BIN, path);
+	public static void setPkgConfigBinPath(String path, String project) {
+		setPreferenceStoreValue(getPkgConfigBinKey(project), path);
 	}
 
 	/**
@@ -68,8 +83,8 @@ public class PreferenceStore {
 	 * 
 	 * @return pkg-config bin path.
 	 */
-	public static String getPkgConfigBinPath() {
-		return getPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_BIN);
+	public static String getPkgConfigBinPath(String project) {
+		return getPreferenceStoreValue(getPkgConfigBinKey(project));
 	}
 
 	/**
@@ -77,43 +92,82 @@ public class PreferenceStore {
 	 * 
 	 * @return pkg-config path.
 	 */
-	public static String getPkgConfigPath() {
-		return getPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_PATH);
+	public static String[] getPkgConfigPath(String project) {
+		String pkgConfigPathStringValue = getPreferenceStoreValue(getPkgConfigPathKey(project));
+		if (pkgConfigPathStringValue.length() == 0)
+			return null;
+		return pkgConfigPathStringValue.split(PATH_SEPARATOR);
 	}
 
 	/**
 	 * Set pkg-config path to the preference store.
 	 * 
-	 * @param path The pkg-config path.
+	 * @param path The pkg-config path
+	 * @param project The project name
 	 */
-	public static void setPkgConfigPath(String path) {
-		setPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_PATH, path);
+	public static void setPkgConfigPath(String path, String project) {
+		String pkgConfigPath = getPreferenceStoreValue(getPkgConfigPathKey(project));
+		if (pkgConfigPath.length() != 0) {
+			pkgConfigPath += PATH_SEPARATOR;
+		}
+		setPreferenceStoreValue(getPkgConfigPathKey(project), pkgConfigPath
+				+ path);
 	}
-	
+
 	/**
 	 * Get pkg-config libdir from the preference store.
 	 * 
 	 * @return pkg-config libdir.
 	 */
-	public static String getPkgConfigLibDir() {
-		return getPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_LIBDIR);
+	public static String[] getPkgConfigLibDir(String project) {
+		String pkgConfigLibDirStringValue = getPreferenceStoreValue(getPkgConfigLibDirKey(project));
+		if (pkgConfigLibDirStringValue.length() == 0)
+			return null;
+		return pkgConfigLibDirStringValue.split(PATH_SEPARATOR);
 	}
 
 	/**
 	 * Set pkg-config libdir to the preference store.
 	 * 
-	 * @param path The pkg-config libdir.
+	 * @param path The pkg-config libdir
+	 * @param project The project name
 	 */
-	public static void setPkgConfigLibDir(String path) {
-		setPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_LIBDIR, path);
+	public static void setPkgConfigLibDir(String path, String project) {
+		String pkgConfigPath = getPreferenceStoreValue(getPkgConfigLibDirKey(project));
+		if (pkgConfigPath.length() != 0) {
+			pkgConfigPath += PATH_SEPARATOR;
+		}
+		setPreferenceStoreValue(getPkgConfigLibDirKey(project), pkgConfigPath
+				+ path);
 	}
-	
+
 	/**
-	 * Get values from the preference store as a String array.
-	 * Used to get preference store values which consist of multiple paths
-	 * separated by a path separator.
+	 * Clear pkg-config path to the preference store.
 	 * 
-	 * @param name the name of the preference
+	 * @param project
+	 *            The project name
+	 */
+	public static void clearPkgConfigPath(String project) {
+		clearPreferenceStoreValue(getPkgConfigPathKey(project));
+	}
+
+	/**
+	 * Clear pkg-config libdir path to the preference store.
+	 * 
+	 * @param project
+	 *            The project name
+	 */
+	public static void clearPkgConfigLibDir(String project) {
+		clearPreferenceStoreValue(getPkgConfigLibDirKey(project));
+	}
+
+	/**
+	 * Get values from the preference store as a String array. Used to get
+	 * preference store values which consist of multiple paths separated by a
+	 * path separator.
+	 * 
+	 * @param name
+	 *            the name of the preference
 	 * @return A String array containing all preference store values
 	 */
 	public static String[] getPreferenceStoreValueAsArray(String name) {
@@ -121,133 +175,38 @@ public class PreferenceStore {
 	}
 
 	/**
-	 * Get existing paths from the Preference store.
+	 * Compute the key for the given pkg-config binary and the given project.
 	 * 
-	 * @param name the name of the preference
-	 * @return paths 
+	 * @param project
+	 *            Project name
+	 * @return Key
 	 */
-	private static String getExistingValues(String name) {
-		String paths = ""; //$NON-NLS-1$
-		if (name.equals(PreferenceConstants.PKG_CONFIG_PATH)) {
-			paths = getPkgConfigPath();
-		} else if (name.equals(PreferenceConstants.PKG_CONFIG_LIBDIR)) {
-			paths = getPkgConfigLibDir();
-		}	
-		return paths;
+	private static String getPkgConfigBinKey(String project) {
+		return PKG_CONFIG_BIN + " - " //$NON-NLS-1$
+				+ project;
 	}
 
 	/**
-	 * Append a new value to the Preference store if it doesn't already exists.
+	 * Compute the key for the given pkg-config lib dir and the given project.
 	 * 
-	 * @param name the name of the preference
-	 * @param value the string-valued preference
+	 * @param project
+	 *            Project name
+	 * @return Key
 	 */
-	public static void appendValue(String name, String value) {
-		StringBuffer sB = new StringBuffer();
-		String paths = null;
-		//get existing paths
-		paths = getExistingValues(name);
-		//if values exist
-		if (paths.length()!=0) {
-			//if the value is reasonable
-			if (!value.equalsIgnoreCase("") && value.length()!=0) { //$NON-NLS-1$
-				//if the paths doesn't contain the new value
-				if (!paths.contains(value)) {
-					//append existing paths to the string buffer
-					sB.append(paths);
-					//add a path separator in the end if it doesn't exists
-					if (paths.charAt(paths.length()-1) != Separators.getPathSeparator().charAt(0)) {
-						sB.append(Separators.getPathSeparator());
-					}
-					//append the new value to end of the list
-					sB.append(value);
-				}				
-			}
-		} else { //no existing values
-			//if the value is reasonable
-			if (!value.equalsIgnoreCase("") && value.length()!=0) { //$NON-NLS-1$
-				//append a new path to the string buffer
-				sB.append(value);
-			}
-		}
-		String newValues = sB.toString();
-		if (newValues.length()!=0) {
-			//set the new preference store value
-			setPreferenceStoreValue(name, newValues);			
-		}
+	private static String getPkgConfigLibDirKey(String project) {
+		return PKG_CONFIG_LIBDIR + " - " //$NON-NLS-1$
+				+ project;
 	}
-
+	
 	/**
-	 * Append pkg-config path to the preference store.
+	 * Compute the key for the given pkg-config path and the given project.
 	 * 
-	 * @param path The pkg-config path.
+	 * @param project
+	 *            Project name
+	 * @return Key
 	 */
-	public static void appendPkgConfigPath(String path) {
-		appendValue(PreferenceConstants.PKG_CONFIG_PATH, path);
+	private static String getPkgConfigPathKey(String project) {
+		return PKG_CONFIG_PATH + " - " //$NON-NLS-1$
+				+ project;
 	}
-
-	/**
-	 * Remove a value from the preference store.
-	 * 
-	 * @param name Name of the preference
-	 * @param value Value to be removed from the preference store
-	 */
-	public static void removeValue(String name, String value) {
-		StringBuffer sB = new StringBuffer();
-		String existingValues = null;
-		String newValue = null;
-		//get existing values
-		existingValues = getExistingValues(name);
-		//if the String contains the value
-		if (existingValues.contains(value)) {
-			//if many values i.e. contains path separator
-			if (existingValues.contains(Separators.getPathSeparator())) {
-				//separate String of values to an array
-				String[] exValArray = existingValues.split(Separators.getPathSeparator());
-				//if more than one value
-				if (exValArray.length > 1) {
-					//remove the value from the array
-					exValArray = ArrayUtil.removePathFromExistingPathList(exValArray, value);
-					//if the array isn't empty
-					if (exValArray.length > 0) {
-						//append all values to the StringBuffer excluding the removed one
-						for (String val : exValArray) {
-							//append a value
-							sB.append(val);
-							//append a path separator
-							sB.append(Separators.getPathSeparator());
-						}
-						//form a String
-						newValue = sB.toString();
-					}
-				} else { //only one value with a path separator at the end
-					newValue = ""; //$NON-NLS-1$
-				}
-
-			} else { //only value without a path separator at the end
-				newValue = ""; //$NON-NLS-1$
-			}
-			//set the new preference store value
-			setPreferenceStoreValue(name, newValue);
-		}
-	}
-
-	/**
-	 * Remove pkg-config path from the preference store.
-	 * 
-	 * @param path The include path to be removed from the preference store.
-	 */
-	public static void removePkgConfigPath(String path) {
-		removeValue(PreferenceConstants.PKG_CONFIG_PATH, path);
-	}
-
-	/**
-	 * Remove pkg-config libdir from the preference store.
-	 * 
-	 * @param path The pkg-config libdir to be removed from the preference store.
-	 */
-	public static void removeLibraryPath(String path) {
-		removeValue(PreferenceConstants.PKG_CONFIG_LIBDIR, path);
-	}
-
 }

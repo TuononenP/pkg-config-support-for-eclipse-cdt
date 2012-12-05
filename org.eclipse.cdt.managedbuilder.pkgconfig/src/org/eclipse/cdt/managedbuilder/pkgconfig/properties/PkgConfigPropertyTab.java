@@ -25,6 +25,11 @@ import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.core.settings.model.ICStorageElement;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.managedbuilder.pkgconfig.Activator;
+import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.LibDirFieldEditor;
+import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.Messages;
+import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PkgConfigBinPathFieldEditor;
+import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PkgConfigPathListEditor;
+import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PkgConfigSettingsDialog;
 import org.eclipse.cdt.managedbuilder.pkgconfig.settings.PkgConfigExternalSettingProvider;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.Parser;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.PathToToolOption;
@@ -55,29 +60,37 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
 /**
- * Property tab to select packages and add pkg-config output
- * of checked packages to compiler and linker (MBS).
+ * Property tab to select packages and add pkg-config output of checked packages
+ * to compiler and linker (MBS).
  * 
  */
 public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
-	private CheckboxTableViewer pkgCfgViewer;
+	PkgConfigBinPathFieldEditor pkgConfigBinPathFieldEditor;
+	PkgConfigPathListEditor configPathListEditor;
+	LibDirFieldEditor libDirEditor;
+	CheckboxTableViewer pkgCfgViewer;
 	private Set<Object> previouslyChecked;
 	private ArrayList<Object> newItems = new ArrayList<Object>();
 	private static final int BUTTON_SELECT = 0;
 	private static final int BUTTON_DESELECT = 1;
+	private static final int BUTTON_ADVANCED = 2;
 	private final String PACKAGES = "packages"; //$NON-NLS-1$
 	private boolean reindexToggle = false;
 
 	private SashForm sashForm;
 
-	private static final String[] BUTTONS = new String[] {
-		"Select", //$NON-NLS-1$
-		"Deselect" //$NON-NLS-1$
+	private static final String[] BUTTONS = new String[] { "Select", //$NON-NLS-1$
+			"Deselect", //$NON-NLS-1$
+			"Advanced..." //$NON-NLS-1$
 	};
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.cdt.ui.newui.AbstractCPropertyTab#createControls(org.eclipse.swt.widgets.Composite)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.cdt.ui.newui.AbstractCPropertyTab#createControls(org.eclipse
+	 * .swt.widgets.Composite)
 	 */
 	@Override
 	public void createControls(Composite parent) {
@@ -85,19 +98,21 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		this.usercomp.setLayout(new GridLayout(1, false));
 
 		this.sashForm = new SashForm(this.usercomp, SWT.NONE);
-		this.sashForm.setBackground(this.sashForm.getDisplay().getSystemColor(SWT.COLOR_GRAY));
+		this.sashForm.setBackground(this.sashForm.getDisplay().getSystemColor(
+				SWT.COLOR_GRAY));
 		this.sashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		GridLayout layout = new GridLayout(1, false);
 		layout.marginHeight = 5;
 		this.sashForm.setLayout(layout);
 
-		Composite c1 = new Composite(this.sashForm, SWT.NONE);
+		final Composite c1 = new Composite(this.sashForm, SWT.NONE);
 		GridLayout layout2 = new GridLayout(3, false);
 		c1.setLayout(layout2);
 
-		this.pkgCfgViewer = CheckboxTableViewer.newCheckList(c1, SWT.MULTI | SWT.H_SCROLL
-				| SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+		this.pkgCfgViewer = CheckboxTableViewer
+				.newCheckList(c1, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL
+						| SWT.FULL_SELECTION | SWT.BORDER);
 		final Table tbl = this.pkgCfgViewer.getTable();
 		tbl.setHeaderVisible(true);
 		tbl.setLinesVisible(true);
@@ -108,7 +123,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
 		createColumns(c1, this.pkgCfgViewer);
 		this.pkgCfgViewer.setContentProvider(new ArrayContentProvider());
-		this.pkgCfgViewer.setInput(DataModelProvider.INSTANCE.getEntries());
+		this.pkgCfgViewer.setInput(new DataModelProvider(this.page.getProject()
+				.getName()).getEntries());
 
 		this.pkgCfgViewer.addCheckStateListener(new PkgListener());
 
@@ -125,16 +141,18 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 			}
 		});
 
-		//buttons
+		// buttons
 		Composite compositeButtons = new Composite(c1, SWT.NONE);
 		initButtons(compositeButtons, BUTTONS);
 
 		initializePackageStates();
-		this.previouslyChecked = new HashSet<Object>(Arrays.asList(getCheckedItems()));
+		this.previouslyChecked = new HashSet<Object>(
+				Arrays.asList(getCheckedItems()));
 	}
 
 	/**
 	 * Get checked items.
+	 * 
 	 * @return
 	 */
 	private Object[] getCheckedItems() {
@@ -147,11 +165,11 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	void handleCheckStateChange() {
 		Object[] checkedItems = getCheckedItems();
 
-		//check if new items checked
-		if(checkedItems.length > this.previouslyChecked.size()) {
-			//add checked items to an array list
+		// check if new items checked
+		if (checkedItems.length > this.previouslyChecked.size()) {
+			// add checked items to an array list
 			for (Object o : checkedItems) {
-				//if new item
+				// if new item
 				if (!this.previouslyChecked.contains(o)) {
 					this.newItems.add(o);
 				}
@@ -162,23 +180,27 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
 		saveChecked();
 		updateData(getResDesc());
-		this.previouslyChecked = new HashSet<Object>(Arrays.asList(checkedItems));
+		this.previouslyChecked = new HashSet<Object>(
+				Arrays.asList(checkedItems));
 		this.newItems.clear();
 	}
 
 	/**
-	 * Add new flags that the packages need to Tools' Options.
-	 * Only for other flags.
+	 * Add new flags that the packages need to Tools' Options. Only for other
+	 * flags.
 	 * 
-	 * @param addedItems Object[]
-	 * @param proj IProject
+	 * @param addedItems
+	 *            Object[]
+	 * @param proj
+	 *            IProject
 	 */
 	private static void addPackageValues(Object[] addedItems, IProject proj) {
 		for (Object item : addedItems) {
-			//handle options
-			String cflags = PkgConfigUtil.getCflags(item.toString());
+			// handle options
+			String cflags = PkgConfigUtil.getCflags(
+					item.toString(), proj.getName());
 			String[] optionsArray = Parser.parseCflagOptions(cflags);
-			if (optionsArray!=null) {
+			if (optionsArray != null) {
 				for (String option : optionsArray) {
 					PathToToolOption.addOtherFlag(option, proj);
 				}
@@ -197,10 +219,10 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 			strgElem = desc.getStorage(this.PACKAGES, true);
 			TableItem[] items = this.pkgCfgViewer.getTable().getItems();
 			String value = null;
-			for(TableItem item : items) {
+			for (TableItem item : items) {
 				/*
-				 * The package names with + symbols were converted so that
-				 * + -> plus in order to prevent an error when saving to
+				 * The package names with + symbols were converted so that + ->
+				 * plus in order to prevent an error when saving to
 				 * ICStorageElement.
 				 */
 				if (item.getText().contains("+")) { //$NON-NLS-1$
@@ -209,8 +231,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 				} else {
 					value = strgElem.getAttribute(item.getText());
 				}
-				if(value!=null) {
-					if(value.equals("true")) { //$NON-NLS-1$
+				if (value != null) {
+					if (value.equals("true")) { //$NON-NLS-1$
 						item.setChecked(true);
 					}
 				}
@@ -223,48 +245,49 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	/**
 	 * Saves checked state of the packages.
 	 */
-	private void saveChecked() { 
+	private void saveChecked() {
 		ICConfigurationDescription desc = getResDesc().getConfiguration();
 		ICStorageElement strgElem = null;
-		//get storage or create one if it doesn't exist
+		// get storage or create one if it doesn't exist
 		try {
 			strgElem = desc.getStorage(this.PACKAGES, true);
 		} catch (CoreException e) {
-			Activator.getDefault().log(e, "Getting packages from the storage failed."); //$NON-NLS-1$
+			Activator.getDefault().log(e,
+					"Getting packages from the storage failed."); //$NON-NLS-1$
 		}
 		TableItem[] items = this.pkgCfgViewer.getTable().getItems();
-		for(TableItem item : items) {
-			if(item != null) {
+		for (TableItem item : items) {
+			if (item != null) {
 				String chkd;
-				//form literal form of boolean state
-				if(item.getChecked()) {
+				// form literal form of boolean state
+				if (item.getChecked()) {
 					chkd = "true"; //$NON-NLS-1$
 				} else {
 					chkd = "false"; //$NON-NLS-1$
 				}
 				/*
-				 * add package name and the checkbox state
-				 * to the storage
+				 * add package name and the checkbox state to the storage
 				 */
-				try {  
+				try {
 					String pkgName = item.getText();
-					//need to convert + symbols to "plus"
+					// need to convert + symbols to "plus"
 					if (pkgName.contains("+")) { //$NON-NLS-1$
 						String newPkgName = pkgName.replace("+", "plus"); //$NON-NLS-1$ //$NON-NLS-2$
-						if (strgElem!=null) {
+						if (strgElem != null) {
 							strgElem.setAttribute(newPkgName, chkd);
 						}
 					} else {
-						if (strgElem!=null) {
+						if (strgElem != null) {
 							strgElem.setAttribute(pkgName, chkd);
 						}
 					}
 				} catch (Exception e) {
-					Activator.getDefault().log(e, "Setting attribute to ICStorageElement failed."); //$NON-NLS-1$
-					//Seems like ICStorageElement cannot store Strings with +
+					Activator.getDefault().log(e,
+							"Setting attribute to ICStorageElement failed."); //$NON-NLS-1$
+					// Seems like ICStorageElement cannot store Strings with +
 					/*
-					 * INVALID_CHARACTER_ERR: An invalid or
-					 * illegal XML character is specified. 
+					 * INVALID_CHARACTER_ERR: An invalid or illegal XML
+					 * character is specified.
 					 */
 				}
 			}
@@ -279,16 +302,16 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
 	@Override
 	protected void performDefaults() {
-		//uncheck every checkbox
+		// uncheck every checkbox
 		this.pkgCfgViewer.setCheckedElements(new Object[] {});
 
-		//remove values from Tools Options
+		// remove values from Tools Options
 		handleCheckStateChange();
 	}
 
 	@Override
 	protected void performOK() {
-		//freshen index if new packages have been selected
+		// freshen index if new packages have been selected
 		if (this.reindexToggle) {
 			rebuiltIndex();
 		}
@@ -297,7 +320,7 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
 	@Override
 	protected void updateButtons() {
-		//nothing here
+		// nothing here
 	}
 
 	@Override
@@ -308,22 +331,24 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		Job j = new Job("Update Pkg-config exernal settings provider") { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				//a set holding external setting providers
-				Set<String> externalSettingsProviders = new
-						LinkedHashSet<String>(Arrays.asList(confDesc.getExternalSettingsProviderIds()));
+				// a set holding external setting providers
+				Set<String> externalSettingsProviders = new LinkedHashSet<String>(
+						Arrays.asList(confDesc.getExternalSettingsProviderIds()));
 
-				//remove pkg-config external setting provider
-				externalSettingsProviders.remove(PkgConfigExternalSettingProvider.ID);
-				confDesc.setExternalSettingsProviderIds(externalSettingsProviders.toArray(new
-						String[externalSettingsProviders.size()]));
+				// remove pkg-config external setting provider
+				externalSettingsProviders
+						.remove(PkgConfigExternalSettingProvider.ID);
+				confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+						.toArray(new String[externalSettingsProviders.size()]));
 
-				//add pkg-config external setting provider
-				externalSettingsProviders.add(PkgConfigExternalSettingProvider.ID);
-				confDesc.setExternalSettingsProviderIds(externalSettingsProviders.toArray(new
-						String[externalSettingsProviders.size()]));
+				// add pkg-config external setting provider
+				externalSettingsProviders
+						.add(PkgConfigExternalSettingProvider.ID);
+				confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+						.toArray(new String[externalSettingsProviders.size()]));
 
-				//update external setting providers
-				confDesc.updateExternalSettingsProviders(new String[] {PkgConfigExternalSettingProvider.ID});
+				// update external setting providers
+				confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
 				return Status.OK_STATUS;
 			}
 		};
@@ -331,15 +356,17 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		j.schedule();
 
 		try {
-			CoreModel.getDefault().setProjectDescription(this.page.getProject(), projDesc);
+			CoreModel.getDefault().setProjectDescription(
+					this.page.getProject(), projDesc);
 		} catch (CoreException e) {
-			Activator.getDefault().log(e, "Setting/updating the project description failed."); //$NON-NLS-1$
+			Activator.getDefault().log(e,
+					"Setting/updating the project description failed."); //$NON-NLS-1$
 		}
 	}
 
 	/**
 	 * Check state listener for the table viewer.
-	 *
+	 * 
 	 */
 	public class PkgListener implements ICheckStateListener {
 
@@ -355,12 +382,13 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	 * @param parent
 	 * @param viewer
 	 */
-	private void createColumns(@SuppressWarnings("unused") final Composite parent,
+	private void createColumns(
+			@SuppressWarnings("unused") final Composite parent,
 			@SuppressWarnings("unused") final TableViewer viewer) {
 		String[] titles = { "Packages", "Description" }; //$NON-NLS-1$ //$NON-NLS-2$
 		int[] bounds = { 200, 450 };
 
-		//first column is for the package
+		// first column is for the package
 		TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0]);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -370,7 +398,7 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 			}
 		});
 
-		//second column is for the description
+		// second column is for the description
 		col = createTableViewerColumn(titles[1], bounds[1]);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -378,7 +406,7 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 				DataModel dm = (DataModel) element;
 				return dm.getDescription();
 			}
-		});		
+		});
 	}
 
 	/**
@@ -390,8 +418,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	 */
 	private TableViewerColumn createTableViewerColumn(String title, int bound) {
 
-		final TableViewerColumn viewerColumn = new TableViewerColumn(this.pkgCfgViewer,
-				SWT.NONE);
+		final TableViewerColumn viewerColumn = new TableViewerColumn(
+				this.pkgCfgViewer, SWT.NONE);
 		final TableColumn column = viewerColumn.getColumn();
 
 		column.setText(title);
@@ -411,17 +439,22 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		return selected;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.eclipse.cdt.ui.newui.AbstractCPropertyTab#buttonPressed(int)
 	 */
 	@Override
-	public void buttonPressed (int n) {
+	public void buttonPressed(int n) {
 		switch (n) {
 		case BUTTON_SELECT:
 			selectedButtonPressed();
 			break;
 		case BUTTON_DESELECT:
 			deselectedButtonPressed();
+			break;
+		case BUTTON_ADVANCED:
+			advancedButtonPressed();
 			break;
 		default:
 			break;
@@ -452,10 +485,29 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	}
 
 	/**
+	 * Action for the Select button.
+	 */
+	private void advancedButtonPressed() {
+		// Create new dialog
+		PkgConfigSettingsDialog dialog = new PkgConfigSettingsDialog(
+				this.usercomp.getShell(), Messages.PkgConfigPropertyTab_0,
+				this.page.getProject().getName());
+		dialog.open();
+		if (PkgConfigPropertyTab.this.pkgCfgViewer != null) {
+			// Update pkg-config libraries for the project
+			PkgConfigPropertyTab.this.pkgCfgViewer
+					.setInput(new DataModelProvider(
+							PkgConfigPropertyTab.this.page.getProject()
+									.getName()).getEntries());
+		}
+	}
+
+	/**
 	 * Rebuilts the index of the selected project in the workspace.
 	 */
 	private void rebuiltIndex() {
-		ICProject cproject = CoreModel.getDefault().getCModel().getCProject(this.page.getProject().getName());
+		ICProject cproject = CoreModel.getDefault().getCModel()
+				.getCProject(this.page.getProject().getName());
 		CCorePlugin.getIndexManager().reindex(cproject);
 	}
 
