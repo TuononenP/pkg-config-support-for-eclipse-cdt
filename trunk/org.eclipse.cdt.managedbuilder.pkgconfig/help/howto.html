@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<title>How to use</title>
+</head>
+
+<body>
+<h1>How to use</h1>
+<h2>Requirements</h2>
+The following must be installed:<br />
+ <ul>
+   <li>Eclipse 3.7 and CDT 8.0 or newer</li>
+   <li>Pkg-config utility</li>
+   <li>Mingw/Cygwin (Windows only)</li>
+   <li>Libraries you are planning to use with pkg-config (such as GTK+ or gtkmm)</li>
+ </ul>
+<h2>Property page</h2>
+<h3>Accessing the property page</h3>
+You can access the Pkg-config property tab by selecting a project in the workspace
+and alternatively either click Project -> Properties in the menubar or simply
+right click the project and choose Properties. From the property page navigate
+C/C++ Build -> Setting -> Pkg-config tab.
+<h3>Functionality of the property page</h3>
+The property page lists all packages that were found by pkg-config utility. By
+checking a package or multiple of them the compiler and linker flags are
+automatically set to the active build configuration. Unchecking of packages
+will remove those flags from the build configuration that are not needed by
+other checked packages. Pressing the OK button closes the property page and
+starts rebuilding the index.
+<h2>Preference page</h2>
+<p>It is possible to set PKG_CONFIG_PATH and PKG_CONFIG_LIBDIR environment
+variables from the Pkg-config preference page. The page can be accessed by
+clicking Window -> Preferences -> Pkg-config in the menubar.
+Note that PKG_CONFIG_PATH can be left blank if pkg-config is found in PATH
+environment variable.</p>
+PKG_CONFIG_PATH is a list of directories to search for .pc files.<br />
+PKG_CONFIG_LIBDIR replaces the default pkg-config search directory. 
+<h2>Building program code</h2>
+After the packages that the code depends on are checked on the property
+page everything is set. Rebuilding the index may take some time depending on
+the size of your codebase. When you see zero unresolved inclusions you are
+ready to build the program code whenever you want.
+</body>
+</html>
