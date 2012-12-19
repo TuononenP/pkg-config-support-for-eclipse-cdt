@@ -1,0 +1,322 @@
+Signed-off-by: Mélanie Bats <melanie.bats@obeo.fr>
+---
+ .../pkgconfig/preferences/Messages.java            |    1 +
+ .../preferences/PkgConfigBinPathFieldEditor.java   |  125 ++++++++++++++++++++
+ .../pkgconfig/preferences/PreferenceConstants.java |    5 +-
+ .../pkgconfig/preferences/PreferencePage.java      |   11 ++
+ .../pkgconfig/preferences/PreferenceStore.java     |   19 +++
+ .../pkgconfig/preferences/messages.properties      |    1 +
+ .../pkgconfig/util/PkgConfigUtil.java              |   51 ++++----
+ 7 files changed, 183 insertions(+), 30 deletions(-)
+ create mode 100644 org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PkgConfigBinPathFieldEditor.java
+
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/Messages.java b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/Messages.java
+index 87f740b..31986b9 100644
+--- a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/Messages.java
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/Messages.java
+@@ -20,6 +20,7 @@ public class Messages extends NLS {
+ 	public static String PreferencePage_0;
+ 	public static String PreferencePage_1;
+ 	public static String PreferencePage_2;
++	public static String PreferencePage_3;
+ 
+ 	static {
+ 		// initialize resource bundle
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PkgConfigBinPathFieldEditor.java b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PkgConfigBinPathFieldEditor.java
+new file mode 100644
+index 0000000..2eff9a0
+--- /dev/null
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PkgConfigBinPathFieldEditor.java
+@@ -0,0 +1,125 @@
++/*******************************************************************************
++ * Copyright (c) 2012 Melanie Bats and others.
++ * All rights reserved. This program and the accompanying materials
++ * are made available under the terms of the Eclipse Public License v1.0
++ * which accompanies this distribution, and is available at
++ * http://www.eclipse.org/legal/epl-v10.html
++ *
++ * Contributors:
++ * Melanie Bats - Initial implementation
++ *******************************************************************************/
++package org.eclipse.cdt.managedbuilder.pkgconfig.preferences;
++
++import java.io.File;
++
++import org.eclipse.jface.preference.StringButtonFieldEditor;
++import org.eclipse.jface.resource.JFaceResources;
++import org.eclipse.swt.SWT;
++import org.eclipse.swt.widgets.Composite;
++import org.eclipse.swt.widgets.FileDialog;
++
++public class PkgConfigBinPathFieldEditor extends StringButtonFieldEditor {
++
++	/**
++	 * Initial path for the Browse dialog.
++	 */
++	private File filterPath = null;
++
++	/**
++	 * Creates a pkg-config bin editor
++	 */
++	protected PkgConfigBinPathFieldEditor() {
++	}
++
++	/**
++	 * Creates a pkg-config bin editor.
++	 * 
++	 * @param name
++	 *            the name of the preference this field editor works on
++	 * @param labelText
++	 *            the label text of the field editor
++	 * @param parent
++	 *            the parent of the field editor's control
++	 */
++	public PkgConfigBinPathFieldEditor(String name, String labelText,
++			Composite parent) {
++		init(name, labelText);
++		setErrorMessage(JFaceResources
++				.getString("FileFieldEditor.errorMessage"));//$NON-NLS-1$
++		setChangeButtonText(JFaceResources.getString("openBrowse"));//$NON-NLS-1$
++		setValidateStrategy(VALIDATE_ON_FOCUS_LOST);
++		createControl(parent);
++	}
++
++	/**
++	 * Helper that opens the directory chooser dialog.
++	 * 
++	 * @param startingDirectory
++	 *            The directory the dialog will open in.
++	 * @return File File or <code>null</code>.
++	 * 
++	 */
++	private File getFile(File startingDirectory) {
++		FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN | SWT.SHEET);
++
++		if (startingDirectory != null) {
++			fileDialog.setFilterPath(startingDirectory.getPath());
++		} else if (this.filterPath != null) {
++			fileDialog.setFilterPath(this.filterPath.getPath());
++		}
++
++		String dir = fileDialog.open();
++		if (dir != null) {
++			dir = dir.trim();
++			if (dir.length() > 0) {
++				return new File(dir);
++			}
++		}
++		return null;
++	}
++
++	@Override
++	/*
++	 * (non-Javadoc) Method declared on StringButtonFieldEditor. Opens the
++	 * directory chooser dialog and returns the selected directory.
++	 */
++	protected String changePressed() {
++		File f = new File(getTextControl().getText());
++		if (!f.exists()) {
++			f = null;
++		}
++		File d = getFile(f);
++		if (d == null) {
++			return null;
++		}
++
++		return d.getAbsolutePath();
++	}
++
++	@Override
++	/*
++	 * (non-Javadoc) Method declared on StringFieldEditor. Checks whether the
++	 * text input field contains a valid directory.
++	 */
++	protected boolean doCheckState() {
++		String fileName = getTextControl().getText();
++		fileName = fileName.trim();
++		if (fileName.length() == 0 && isEmptyStringAllowed()) {
++			return true;
++		}
++		File file = new File(fileName);
++		return !file.isDirectory() && file.getName().contains("pkg-config"); //$NON-NLS-1$
++	}
++
++	/**
++	 * Sets the initial path for the Browse dialog.
++	 * 
++	 * @param path
++	 *            initial path for the Browse dialog
++	 * @since 3.6
++	 */
++	public void setFilterPath(File path) {
++		this.filterPath = path;
++	}
++
++}
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceConstants.java b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceConstants.java
+index ec1d31b..1a7617e 100644
+--- a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceConstants.java
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceConstants.java
+@@ -18,5 +18,6 @@ public class PreferenceConstants {
+ 	
+ 	public static final String PKG_CONFIG_LIBDIR = "Replaces the" + //$NON-NLS-1$
+ 			" default pkg-config search directory."; //$NON-NLS-1$
+-	
+-}
++
++	public static final String PKG_CONFIG_BIN = "Path to the pkg-config executable"; //$NON-NLS-1$
++}
+\ No newline at end of file
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferencePage.java b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferencePage.java
+index 184484a..7faf7aa 100644
+--- a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferencePage.java
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferencePage.java
+@@ -33,6 +33,7 @@ import org.eclipse.ui.PlatformUI;
+ public class PreferencePage extends FieldEditorPreferencePage
+ implements IWorkbenchPreferencePage {
+ 
++	private PkgConfigBinPathFieldEditor pkgConfigBinEditor;
+ 	private PkgConfigPathListEditor configPathListEditor;
+ 	private LibDirFieldEditor libDirEditor;
+ 	
+@@ -80,6 +81,11 @@ implements IWorkbenchPreferencePage {
+ 		vars.createVariable("PKG_CONFIG_PATH", PreferenceStore.getPkgConfigPath()); //$NON-NLS-1$
+ 		fUserSupplier.setWorkspaceEnvironment(vars);
+ 		
++		// create PKG_CONFIG_BIN environment variable
++		String pkgConfigBinEditorValue = this.pkgConfigBinEditor
++				.getStringValue();
++		PreferenceStore.setPkgConfigBin(pkgConfigBinEditorValue);
++
+ 		restartWorkspaceDialog();
+ 		
+         return true;
+@@ -119,6 +125,11 @@ implements IWorkbenchPreferencePage {
+ 	 * Creates field editors for the preference page.
+ 	 */
+ 	protected void createFieldEditors() {
++		// field PKG_CONFIG_BIN
++		this.pkgConfigBinEditor = new PkgConfigBinPathFieldEditor(
++				PreferenceConstants.PKG_CONFIG_BIN, Messages.PreferencePage_3,
++				getFieldEditorParent());
++		addField(this.pkgConfigBinEditor);
+ 		//list editor for PKG_CONFIG_PATH values
+ 		this.configPathListEditor = new PkgConfigPathListEditor(
+ 				PreferenceConstants.PKG_CONFIG_PATH, Messages.PreferencePage_1, 
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceStore.java b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceStore.java
+index ed2ee96..3829e8b 100644
+--- a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceStore.java
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/PreferenceStore.java
+@@ -54,6 +54,25 @@ public class PreferenceStore {
+ 	}
+ 	
+ 	/**
++	 * Set pkg-config bin to the preference store.
++	 * 
++	 * @param path
++	 *            The pkg-config bin.
++	 */
++	public static void setPkgConfigBin(String path) {
++		setPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_BIN, path);
++	}
++
++	/**
++	 * Get pkg-config bin path from the preference store.
++	 * 
++	 * @return pkg-config bin path.
++	 */
++	public static String getPkgConfigBinPath() {
++		return getPreferenceStoreValue(PreferenceConstants.PKG_CONFIG_BIN);
++	}
++
++	/**
+ 	 * Get pkg-config path from the preference store.
+ 	 * 
+ 	 * @return pkg-config path.
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/messages.properties b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/messages.properties
+index 41f54bd..cee06c7 100644
+--- a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/messages.properties
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/preferences/messages.properties
+@@ -1,5 +1,6 @@
+ PreferencePage_0=Preferences for Pkg-config
+ PreferencePage_1=PKG_CONFIG_PATH:
+ PreferencePage_2=PKG_CONFIG_LIBDIR (replaces default):
++PreferencePage_3=Path to pkg-config executable:
+ PkgConfigPathListEditor_0=Browse a directory path
+ PkgConfigPathListEditor_1=Select a directory
+\ No newline at end of file
+diff --git a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/util/PkgConfigUtil.java b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/util/PkgConfigUtil.java
+index 3517733..5601645 100644
+--- a/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/util/PkgConfigUtil.java
++++ b/org.eclipse.cdt.managedbuilder.pkgconfig/src/org/eclipse/cdt/managedbuilder/pkgconfig/util/PkgConfigUtil.java
+@@ -45,23 +45,21 @@ public class PkgConfigUtil {
+ 	 */
+ 	private static String getPkgOutput(String command, String pkg) {
+ 		ProcessBuilder pb = null;
+-		String confPath = PreferenceStore.getPkgConfigPath();
++		String pkgConfigBinPath = PreferenceStore.getPkgConfigBinPath();
++		if (pkgConfigBinPath.isEmpty()) {
++			if (OSDetector.isWindows())
++				pkgConfigBinPath = PKG_CONFIG + ".exe"; //$NON-NLS-1$
++			else
++				pkgConfigBinPath = PKG_CONFIG;
++		}
++
+ 		if (OSDetector.isUnix() || OSDetector.isMac()) {
+-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
+-				confPath = confPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
+-				pb = new ProcessBuilder("bash", "-c", confPath+ //$NON-NLS-1$ //$NON-NLS-2$
+-						Separators.getFileSeparator()+PKG_CONFIG+" "+command+" "+pkg); //$NON-NLS-1$ //$NON-NLS-2$
+-			} else {
+-				pb = new ProcessBuilder("bash", "-c", PKG_CONFIG+" "+command+" "+pkg); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+-			}
++			pb = new ProcessBuilder(
++					"bash", "-c", pkgConfigBinPath + " " + command + " " + pkg); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+ 		} else if (OSDetector.isWindows()) {
+-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
+-				pb = new ProcessBuilder("cmd", "/c", "\""+confPath+ //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+-						Separators.getFileSeparator()+PKG_CONFIG+"\"", command, pkg);	//$NON-NLS-1$ 
+-			} else {
+-				pb = new ProcessBuilder("cmd", "/c", PKG_CONFIG, command, pkg);	//$NON-NLS-1$ //$NON-NLS-2$
+-			}
++			pb = new ProcessBuilder("cmd", "/c", pkgConfigBinPath, command, pkg); //$NON-NLS-1$ //$NON-NLS-2$
+ 		}
++
+ 		Process p = null;
+ 		try {
+ 			if (pb != null) {
+@@ -144,22 +142,19 @@ public class PkgConfigUtil {
+ 	 */
+ 	public static List<String> getAllPackages() {
+ 		ProcessBuilder pb = null;
+-		String confPath = PreferenceStore.getPkgConfigPath();
++		String pkgConfigBinPath = PreferenceStore.getPkgConfigBinPath();
++		if (pkgConfigBinPath.isEmpty()) {
++			if (OSDetector.isWindows())
++				pkgConfigBinPath = PKG_CONFIG + ".exe"; //$NON-NLS-1$
++			else
++				pkgConfigBinPath = PKG_CONFIG;
++		}
+ 		if (OSDetector.isUnix() || OSDetector.isMac()) {
+-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
+-				confPath = confPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
+-				pb = new ProcessBuilder("bash", "-c", confPath+ //$NON-NLS-1$ //$NON-NLS-2$
+-						Separators.getFileSeparator()+PKG_CONFIG+" "+LIST_PACKAGES); //$NON-NLS-1$ 
+-			} else {
+-				pb = new ProcessBuilder("bash", "-c", PKG_CONFIG+" "+LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+-			}
++			pkgConfigBinPath = pkgConfigBinPath.replace(" ", "\\ "); //$NON-NLS-1$ //$NON-NLS-2$
++			pb = new ProcessBuilder("bash", "-c", pkgConfigBinPath + " " //$NON-NLS-1$ //$NON-NLS-2$  //$NON-NLS-3$
++					+ LIST_PACKAGES);
+ 		} else if (OSDetector.isWindows()) {
+-			if (confPath!=null && !confPath.equals("")) { //$NON-NLS-1$
+-				pb = new ProcessBuilder("cmd", "/c", "\""+confPath+ //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+-						Separators.getFileSeparator()+PKG_CONFIG+"\"", LIST_PACKAGES); //$NON-NLS-1$ 
+-			} else {
+-				pb = new ProcessBuilder("cmd", "/c", PKG_CONFIG, LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$
+-			}
++			pb = new ProcessBuilder("cmd", "/c", pkgConfigBinPath, LIST_PACKAGES); //$NON-NLS-1$ //$NON-NLS-2$
+ 		}
+ 		try {
+ 			if (pb !=null) {
+-- 1.7.9.5 
