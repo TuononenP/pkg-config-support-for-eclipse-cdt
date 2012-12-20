@@ -1,3 +1,9 @@
+0.8.0
+ * Project-level configuration
+ * Use of environment variable on the pkg-config command
+ * Preference to set pkg-config binary path
+ * Use of List instead of ArrayList
+
 0.5.4
   * Allow spaces in pkg-config path under Unix systems
   * NullPointerError fixed on pkg-config property tab
