@@ -23,13 +23,16 @@ import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.core.settings.model.ICStorageElement;
+import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
+import org.eclipse.cdt.managedbuilder.core.ITool;
+import org.eclipse.cdt.managedbuilder.core.IToolChain;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.managedbuilder.pkgconfig.Activator;
 import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.LibDirFieldEditor;
 import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.Messages;
-import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PkgConfigBinPathFieldEditor;
 import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PkgConfigPathListEditor;
 import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PkgConfigSettingsDialog;
+import org.eclipse.cdt.managedbuilder.pkgconfig.preferences.PreferenceStore;
 import org.eclipse.cdt.managedbuilder.pkgconfig.settings.PkgConfigExternalSettingProvider;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.Parser;
 import org.eclipse.cdt.managedbuilder.pkgconfig.util.PathToToolOption;
@@ -66,7 +69,6 @@ import org.eclipse.swt.widgets.TableItem;
  */
 public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
-	PkgConfigBinPathFieldEditor pkgConfigBinPathFieldEditor;
 	PkgConfigPathListEditor configPathListEditor;
 	LibDirFieldEditor libDirEditor;
 	CheckboxTableViewer pkgCfgViewer;
@@ -84,6 +86,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 			"Deselect", //$NON-NLS-1$
 			"Advanced..." //$NON-NLS-1$
 	};
+
+	private IToolChain selectedToolChain;
 
 	/*
 	 * (non-Javadoc)
@@ -123,6 +127,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
 		createColumns(c1, this.pkgCfgViewer);
 		this.pkgCfgViewer.setContentProvider(new ArrayContentProvider());
+		this.selectedToolChain = getSelectedToolchain();
+		updatePkgConfigBinPath();
 		this.pkgCfgViewer.setInput(new DataModelProvider(this.page.getProject()
 				.getName()).getEntries());
 
@@ -148,6 +154,24 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		initializePackageStates();
 		this.previouslyChecked = new HashSet<Object>(
 				Arrays.asList(getCheckedItems()));
+	}
+
+	@Override
+	public void handleTabEvent(int kind, Object data) {
+
+		if (this.selectedToolChain != null
+				&& this.selectedToolChain.getId() != getSelectedToolchain()
+						.getId()) {
+			this.selectedToolChain = getSelectedToolchain();
+			updatePkgConfigBinPath();
+			if (PkgConfigPropertyTab.this.pkgCfgViewer != null) {
+				PkgConfigPropertyTab.this.pkgCfgViewer
+						.setInput(new DataModelProvider(
+								PkgConfigPropertyTab.this.page.getProject()
+										.getName()).getEntries());
+				PkgConfigPropertyTab.this.pkgCfgViewer.refresh();
+			}
+		}
 	}
 
 	/**
@@ -197,8 +221,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	private static void addPackageValues(Object[] addedItems, IProject proj) {
 		for (Object item : addedItems) {
 			// handle options
-			String cflags = PkgConfigUtil.getCflags(
-					item.toString(), proj.getName());
+			String cflags = PkgConfigUtil.getCflags(item.toString(),
+					proj.getName());
 			String[] optionsArray = Parser.parseCflagOptions(cflags);
 			if (optionsArray != null) {
 				for (String option : optionsArray) {
@@ -491,15 +515,50 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		// Create new dialog
 		PkgConfigSettingsDialog dialog = new PkgConfigSettingsDialog(
 				this.usercomp.getShell(), Messages.PkgConfigPropertyTab_0,
-				this.page.getProject().getName());
+				this.page.getProject());
 		dialog.open();
 		if (PkgConfigPropertyTab.this.pkgCfgViewer != null) {
 			// Update pkg-config libraries for the project
+			updatePkgConfigBinPath();
 			PkgConfigPropertyTab.this.pkgCfgViewer
 					.setInput(new DataModelProvider(
 							PkgConfigPropertyTab.this.page.getProject()
 									.getName()).getEntries());
 		}
+	}
+
+	/**
+	 * Update the pkg-config path according to the toolchain if the default
+	 * toolchain executable is selected by the user in the pkg-config advanced
+	 * preferences.
+	 */
+	private void updatePkgConfigBinPath() {
+		// Search if a toolchain tool defines the pkg-config tool bin
+		// path
+		String pkgConfigPath = ""; //$NON-NLS-1$
+		if (this.page != null
+				&& PreferenceStore.isPkgConfigExecutableDefault(this.page
+						.getProject().getName())) {
+			for (ITool tool : this.selectedToolChain
+					.getToolsBySuperClassId("org.eclipse.cdt.managedbuilder.pkgconfig.tool")) { //$NON-NLS-1$
+				pkgConfigPath = tool.getToolCommand();
+			}
+
+			PreferenceStore.setPkgConfigBinPath(pkgConfigPath, this.page
+					.getProject().getName());
+		}
+	}
+
+	private IToolChain getSelectedToolchain() {
+		if (this.page != null) {
+			IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(this.page
+					.getProject());
+			if (info != null) {
+				return info.getDefaultConfiguration().getToolChain();
+
+			}
+		}
+		return null;
 	}
 
 	/**

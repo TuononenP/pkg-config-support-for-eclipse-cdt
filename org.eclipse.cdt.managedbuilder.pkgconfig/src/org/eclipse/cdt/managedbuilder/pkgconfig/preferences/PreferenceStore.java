@@ -23,9 +23,14 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 public class PreferenceStore {
 
 	private static final String PATH_SEPARATOR = ";"; //$NON-NLS-1$
+	private static final String PKG_CONFIG_BIN_KIND = "PKG_CONFIG_BIN_KIND"; //$NON-NLS-1$
 	private static final String PKG_CONFIG_BIN = "PKG_CONFIG_BIN"; //$NON-NLS-1$
 	private static final String PKG_CONFIG_LIBDIR = "PKG_CONFIG_LIBDIR"; //$NON-NLS-1$
 	private static final String PKG_CONFIG_PATH = "PKG_CONFIG_PATH"; //$NON-NLS-1$
+
+	public enum PkgConfigExecutable {
+		Default, Custom
+	}
 
 	/**
 	 * Get the Pkg-config preference store.
@@ -65,6 +70,29 @@ public class PreferenceStore {
 	 */
 	public static void clearPreferenceStoreValue(String name) {
 		getPreferenceStore().put(name, ""); //$NON-NLS-1$
+	}
+
+	/**
+	 * Set pkg-config executable type to the preference store.
+	 * 
+	 * @param pkgConfigExecutable
+	 *            The pkg-config executable.
+	 * @param project
+	 */
+	public static void setPkgConfigExecutable(
+			PkgConfigExecutable pkgConfigExecutable, String project) {
+		setPreferenceStoreValue(getPkgConfigExecutableKey(project),
+				pkgConfigExecutable.toString());
+	}
+
+	/**
+	 * Is pkg-config executable set to default in the preference store.
+	 * 
+	 * @return True if the executable to use is the deafult one else return false to use the custom.
+	 */
+	public static boolean isPkgConfigExecutableDefault(String project) {
+		return !PkgConfigExecutable.Custom.name().equals(
+				getPreferenceStoreValue(getPkgConfigExecutableKey(project)));
 	}
 
 	/**
@@ -183,6 +211,19 @@ public class PreferenceStore {
 	 */
 	private static String getPkgConfigBinKey(String project) {
 		return PKG_CONFIG_BIN + " - " //$NON-NLS-1$
+				+ project;
+	}
+
+	/**
+	 * Compute the key for the given pkg-config binary kind and the given
+	 * project.
+	 * 
+	 * @param project
+	 *            Project name
+	 * @return Key
+	 */
+	private static String getPkgConfigExecutableKey(String project) {
+		return PKG_CONFIG_BIN_KIND + " - " //$NON-NLS-1$
 				+ project;
 	}
 

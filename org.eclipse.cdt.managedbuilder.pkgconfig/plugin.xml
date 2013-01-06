@@ -47,4 +47,13 @@
                class="org.eclipse.cdt.managedbuilder.pkgconfig.settings.PkgConfigExternalSettingProvider">
          </provider>
       </extension>
+      <extension
+            point="org.eclipse.cdt.managedbuilder.core.buildDefinitions">
+         <tool
+               id="org.eclipse.cdt.managedbuilder.pkgconfig.tool"
+               isAbstract="true"
+               name="Pkg-Config"
+               natureFilter="both">
+         </tool>
+      </extension>
 </plugin>
