@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: %pluginName
+Bundle-Name: Petri Tuononen
 Bundle-SymbolicName: org.eclipse.cdt.managedbuilder.pkgconfig;singleton:=true
 Bundle-Version: 0.8.0.qualifier
 Bundle-Activator: org.eclipse.cdt.managedbuilder.pkgconfig.Activator
@@ -26,4 +26,4 @@ Export-Package: org.eclipse.cdt.managedbuilder.pkgconfig;
  org.eclipse.cdt.managedbuilder.pkgconfig.util
 Import-Package: org.eclipse.cdt.managedbuilder.core,
  org.eclipse.ui
-Bundle-Vendor: %providerName
+Bundle-Vendor: Pkg-config support
