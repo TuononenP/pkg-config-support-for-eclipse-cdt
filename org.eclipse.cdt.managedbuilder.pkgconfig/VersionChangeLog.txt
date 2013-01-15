@@ -1,3 +1,8 @@
+1.0.0
+ * Made pkg-config another "tool" of a toolchain, so that Eclipse plugins registering toolchains can specify the path to a toolchain-specific pkg-config binary along with the path to other
+traditional tools (compilers, etc). 
+ * Tycho support to automate the build and the update-site creation.
+ 
 0.8.0
  * Project-level configuration
  * Use of environment variable on the pkg-config command
