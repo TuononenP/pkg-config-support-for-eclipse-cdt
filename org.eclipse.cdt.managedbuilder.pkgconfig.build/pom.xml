@@ -42,14 +42,14 @@
 	<repositories>
 	<!-- Common -->
 		<repository>
-			<id>Juno</id>
+			<id>Mars</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/juno</url>
+			<url>http://download.eclipse.org/releases/mars</url>
 		</repository>
 		<repository>
 			<id>The Eclipse Project Updates</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/eclipse/updates/3.8</url>
+			<url>http://download.eclipse.org/eclipse/updates/4.5</url>
 		</repository>
 	</repositories>
 
