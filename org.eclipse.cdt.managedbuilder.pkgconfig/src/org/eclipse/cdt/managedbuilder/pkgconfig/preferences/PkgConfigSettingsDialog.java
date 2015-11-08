@@ -143,7 +143,7 @@ public class PkgConfigSettingsDialog extends AbstractPropertyDialog {
 				String pkgConfigBinPath = PreferenceStore
 						.getPkgConfigBinPath(PkgConfigSettingsDialog.this.projectName);
 				FileDialog dialog = new FileDialog(
-						PkgConfigSettingsDialog.this.shell, SWT.OPEN);
+						PkgConfigSettingsDialog.this.getParent(), SWT.OPEN);
 				dialog.setFileName(pkgConfigBinPath);
 				PkgConfigSettingsDialog.this.selectedFile = dialog.open();
 			}
