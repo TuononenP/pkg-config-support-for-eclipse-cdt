@@ -8,13 +8,13 @@
 	<parent>
 		<groupId>org.eclipse.cdt.managedbuilder.pkgconfig.parent</groupId>
 		<artifactId>pkgconfig-parent</artifactId>
-		<version>0.8.0-SNAPSHOT</version>
+		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../org.eclipse.cdt.managedbuilder.pkgconfig.build</relativePath>
 	</parent>
 
 	<artifactId>org.eclipse.cdt.managedbuilder.pkgconfig</artifactId>
 	<packaging>eclipse-plugin</packaging>
-	<version>0.8.0-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 
 
 	<build>

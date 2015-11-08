@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.eclipse.cdt.managedbuilder.pkgconfig.feature_0.8.0.qualifier.jar" id="org.eclipse.cdt.managedbuilder.pkgconfig.feature" version="0.8.0.qualifier">
+   <bundle id="org.eclipse.cdt.managedbuilder.pkgconfig" version="1.0.0.qualifier">
       <category name="org.eclipse.cdt.managedbuilder.pkgconfig"/>
-   </feature>
-   <category-def name="org.eclipse.cdt.managedbuilder.pkgconfig" label="Pkg-config Support"/>
+   </bundle>
+   <category-def name="org.eclipse.cdt.managedbuilder.pkgconfig" label="Pkg-config support">
+      <description>
+         Pkg-config support will set compiler and linker flags automatically that GCC needs to build selected packages - specifically includes, libraries, and some other GCC flags.
+      </description>
+   </category-def>
 </site>
