@@ -352,7 +352,7 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 		final ICConfigurationDescription confDesc = cfg.getConfiguration();
 		ICProjectDescription projDesc = confDesc.getProjectDescription();
 
-		Job j = new Job("Update Pkg-config exernal settings provider") { //$NON-NLS-1$
+		Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				// a set holding external setting providers
