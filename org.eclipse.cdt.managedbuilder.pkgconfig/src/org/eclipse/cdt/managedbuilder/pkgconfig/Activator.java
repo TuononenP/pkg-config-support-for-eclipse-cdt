@@ -83,22 +83,27 @@ public class Activator extends AbstractUIPlugin {
 				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(event
 						.getProject());
 
-				IConfiguration cfg = info.getDefaultConfiguration();
 				ICProjectDescription projDesc = CoreModel.getDefault()
 						.getProjectDescription(event.getProject(), true);
-				final ICConfigurationDescription confDesc = projDesc
-						.getConfigurationById(cfg.getId());
 
-				Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						// update external setting providers
-						confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
-						return Status.OK_STATUS;
+				if (projDesc != null) {
+					IConfiguration cfg = info.getDefaultConfiguration();
+					if (cfg != null) {
+						final ICConfigurationDescription confDesc = projDesc
+								.getConfigurationById(cfg.getId());
+
+						Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
+							@Override
+							protected IStatus run(IProgressMonitor monitor) {
+								// update external setting providers
+								confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
+								return Status.OK_STATUS;
+							}
+						};
+						j.setPriority(Job.INTERACTIVE);
+						j.schedule();
 					}
-				};
-				j.setPriority(Job.INTERACTIVE);
-				j.schedule();
+				}
 			}
 		};
 		// Listen for the configuration updates (toolchain updates are important
