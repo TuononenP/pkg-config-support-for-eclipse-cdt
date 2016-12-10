@@ -350,41 +350,44 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	@Override
 	protected void updateData(ICResourceDescription cfg) {
 		final ICConfigurationDescription confDesc = cfg.getConfiguration();
-		ICProjectDescription projDesc = confDesc.getProjectDescription();
+		if (confDesc != null) {
+			ICProjectDescription projDesc = confDesc.getProjectDescription();
+			if (projDesc != null) {
+				Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						// a set holding external setting providers
+						Set<String> externalSettingsProviders = new LinkedHashSet<String>(
+								Arrays.asList(confDesc.getExternalSettingsProviderIds()));
 
-		Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				// a set holding external setting providers
-				Set<String> externalSettingsProviders = new LinkedHashSet<String>(
-						Arrays.asList(confDesc.getExternalSettingsProviderIds()));
+						// remove pkg-config external setting provider
+						externalSettingsProviders
+								.remove(PkgConfigExternalSettingProvider.ID);
+						confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+								.toArray(new String[externalSettingsProviders.size()]));
 
-				// remove pkg-config external setting provider
-				externalSettingsProviders
-						.remove(PkgConfigExternalSettingProvider.ID);
-				confDesc.setExternalSettingsProviderIds(externalSettingsProviders
-						.toArray(new String[externalSettingsProviders.size()]));
+						// add pkg-config external setting provider
+						externalSettingsProviders
+								.add(PkgConfigExternalSettingProvider.ID);
+						confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+								.toArray(new String[externalSettingsProviders.size()]));
 
-				// add pkg-config external setting provider
-				externalSettingsProviders
-						.add(PkgConfigExternalSettingProvider.ID);
-				confDesc.setExternalSettingsProviderIds(externalSettingsProviders
-						.toArray(new String[externalSettingsProviders.size()]));
+						// update external setting providers
+						confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
+						return Status.OK_STATUS;
+					}
+				};
+				j.setPriority(Job.INTERACTIVE);
+				j.schedule();
 
-				// update external setting providers
-				confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
-				return Status.OK_STATUS;
+				try {
+					CoreModel.getDefault().setProjectDescription(
+							this.page.getProject(), projDesc);
+				} catch (CoreException e) {
+					Activator.getDefault().log(e,
+							"Setting/updating the project description failed."); //$NON-NLS-1$
+				}	
 			}
-		};
-		j.setPriority(Job.INTERACTIVE);
-		j.schedule();
-
-		try {
-			CoreModel.getDefault().setProjectDescription(
-					this.page.getProject(), projDesc);
-		} catch (CoreException e) {
-			Activator.getDefault().log(e,
-					"Setting/updating the project description failed."); //$NON-NLS-1$
 		}
 	}
 
