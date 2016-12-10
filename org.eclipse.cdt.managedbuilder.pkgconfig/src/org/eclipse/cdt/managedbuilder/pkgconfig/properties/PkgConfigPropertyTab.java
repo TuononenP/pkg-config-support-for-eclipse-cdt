@@ -356,25 +356,38 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 				Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
-						// a set holding external setting providers
-						Set<String> externalSettingsProviders = new LinkedHashSet<String>(
-								Arrays.asList(confDesc.getExternalSettingsProviderIds()));
+						try {
+							// a set holding external setting providers
+							Set<String> externalSettingsProviders = new LinkedHashSet<String>(
+									Arrays.asList(confDesc.getExternalSettingsProviderIds()));
 
-						// remove pkg-config external setting provider
-						externalSettingsProviders
-								.remove(PkgConfigExternalSettingProvider.ID);
-						confDesc.setExternalSettingsProviderIds(externalSettingsProviders
-								.toArray(new String[externalSettingsProviders.size()]));
+							// remove pkg-config external setting provider
+							externalSettingsProviders
+									.remove(PkgConfigExternalSettingProvider.ID);
+							confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+									.toArray(new String[externalSettingsProviders.size()]));
 
-						// add pkg-config external setting provider
-						externalSettingsProviders
-								.add(PkgConfigExternalSettingProvider.ID);
-						confDesc.setExternalSettingsProviderIds(externalSettingsProviders
-								.toArray(new String[externalSettingsProviders.size()]));
+							// add pkg-config external setting provider
+							externalSettingsProviders
+									.add(PkgConfigExternalSettingProvider.ID);
+							confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+									.toArray(new String[externalSettingsProviders.size()]));
 
-						// update external setting providers
-						confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
-						return Status.OK_STATUS;
+							// update external setting providers
+							confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
+							return Status.OK_STATUS;
+						}
+						catch (org.eclipse.cdt.core.settings.model.WriteAccessException e) {
+							Activator.getDefault().log(e,
+									"Setting/updating the project description failed."); //$NON-NLS-1$
+							return Status.CANCEL_STATUS;
+						}
+						catch (Exception e) {
+							Activator.getDefault().log(e,
+									"Setting/updating the project description failed."); //$NON-NLS-1$
+							return Status.CANCEL_STATUS;
+						}
+
 					}
 				};
 				j.setPriority(Job.INTERACTIVE);
