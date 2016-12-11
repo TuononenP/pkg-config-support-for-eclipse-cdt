@@ -11,23 +11,26 @@
 package org.eclipse.cdt.managedbuilder.pkgconfig;
 
 import java.io.IOException;
+//import java.util.Arrays;
+//import java.util.LinkedHashSet;
 import java.util.PropertyResourceBundle;
+//import java.util.Set;
 
 import org.eclipse.cdt.core.model.CoreModel;
-import org.eclipse.cdt.core.settings.model.CProjectDescriptionEvent;
-import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
-import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+//import org.eclipse.cdt.core.settings.model.CProjectDescriptionEvent;
+//import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+//import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionListener;
-import org.eclipse.cdt.managedbuilder.core.IConfiguration;
-import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
-import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
-import org.eclipse.cdt.managedbuilder.pkgconfig.settings.PkgConfigExternalSettingProvider;
+//import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+//import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
+//import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+//import org.eclipse.cdt.managedbuilder.pkgconfig.settings.PkgConfigExternalSettingProvider;
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IProgressMonitor;
+//import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
+//import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
@@ -70,46 +73,54 @@ public class Activator extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
-		this.listener = new ICProjectDescriptionListener() {
-
-			// Handle the configuration updates in order to clear the pkg
-			// config settings (eg. if a new toolchain is selected, the pkg
-			// config settings will be updated after the user apply the
-			// changes even if he does not go through the pkg config
-			// property tab)
-			@Override
-			public void handleEvent(CProjectDescriptionEvent event) {
-				// Get the configuration description of the updated project
-				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(event
-						.getProject());
-
-				ICProjectDescription projDesc = CoreModel.getDefault()
-						.getProjectDescription(event.getProject(), true);
-
-				if (projDesc != null) {
-					IConfiguration cfg = info.getDefaultConfiguration();
-					if (cfg != null) {
-						final ICConfigurationDescription confDesc = projDesc
-								.getConfigurationById(cfg.getId());
-
-						Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
-							@Override
-							protected IStatus run(IProgressMonitor monitor) {
-								// update external setting providers
-								confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
-								return Status.OK_STATUS;
-							}
-						};
-						j.setPriority(Job.INTERACTIVE);
-						j.schedule();
-					}
-				}
-			}
-		};
-		// Listen for the configuration updates (toolchain updates are important
-		// for us as the pkg-config plugin depends on the select toolchain)
-		CoreModel.getDefault().addCProjectDescriptionListener(this.listener,
-				CProjectDescriptionEvent.DATA_APPLIED);
+//		this.listener = new ICProjectDescriptionListener() {
+//
+//			// Handle the configuration updates in order to clear the pkg
+//			// config settings (eg. if a new toolchain is selected, the pkg
+//			// config settings will be updated after the user apply the
+//			// changes even if he does not go through the pkg config
+//			// property tab)
+//			@Override
+//			public void handleEvent(CProjectDescriptionEvent event) {
+//				// Get the configuration description of the updated project
+//				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(event
+//						.getProject());
+//
+//				ICProjectDescription projDesc = CoreModel.getDefault()
+//						.getProjectDescription(event.getProject(), true);
+//
+//				if (projDesc != null) {
+//					IConfiguration cfg = info.getDefaultConfiguration();
+//					if (cfg != null) {
+//						final ICConfigurationDescription confDesc = projDesc
+//								.getConfigurationById(cfg.getId());
+//
+//						Job j = new Job("Update Pkg-config external settings provider") { //$NON-NLS-1$
+//							@Override
+//							protected IStatus run(IProgressMonitor monitor) {
+//								// get all external setting providers
+//								Set<String> externalSettingsProviders = new LinkedHashSet<String>(
+//									Arrays.asList(confDesc.getExternalSettingsProviderIds()));
+//								// add external setting provider
+//								externalSettingsProviders.add(PkgConfigExternalSettingProvider.ID);
+//								confDesc.setExternalSettingsProviderIds(externalSettingsProviders
+//										.toArray(new String[externalSettingsProviders.size()]));
+//						
+//								// update external setting providers
+//								confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
+//								return Status.OK_STATUS;
+//							}
+//						};
+//						j.setPriority(Job.INTERACTIVE);
+//						j.schedule();
+//					}
+//				}
+//			}
+//		};
+//		// Listen for the configuration updates (toolchain updates are important
+//		// for us as the pkg-config plugin depends on the select toolchain)
+//		CoreModel.getDefault().addCProjectDescriptionListener(this.listener,
+//				CProjectDescriptionEvent.DATA_APPLIED);
 	}
 
 	/*

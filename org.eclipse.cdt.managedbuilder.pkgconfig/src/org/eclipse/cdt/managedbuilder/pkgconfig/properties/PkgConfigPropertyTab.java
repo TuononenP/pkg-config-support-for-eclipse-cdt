@@ -321,7 +321,7 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 	@Override
 	protected void performApply(ICResourceDescription src,
 			ICResourceDescription dst) {
-		updateData(getResDesc());
+		//updateData(getResDesc());
 	}
 
 	@Override
@@ -361,17 +361,12 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 							Set<String> externalSettingsProviders = new LinkedHashSet<String>(
 									Arrays.asList(confDesc.getExternalSettingsProviderIds()));
 
-							// remove pkg-config external setting provider
-							externalSettingsProviders
-									.remove(PkgConfigExternalSettingProvider.ID);
-							confDesc.setExternalSettingsProviderIds(externalSettingsProviders
-									.toArray(new String[externalSettingsProviders.size()]));
-
 							// add pkg-config external setting provider
-							externalSettingsProviders
-									.add(PkgConfigExternalSettingProvider.ID);
-							confDesc.setExternalSettingsProviderIds(externalSettingsProviders
-									.toArray(new String[externalSettingsProviders.size()]));
+							if (externalSettingsProviders.contains(PkgConfigExternalSettingProvider.ID) == false) {
+								externalSettingsProviders.add(PkgConfigExternalSettingProvider.ID);
+								confDesc.setExternalSettingsProviderIds(externalSettingsProviders.toArray(
+										new String[externalSettingsProviders.size()]));
+							}
 
 							// update external setting providers
 							confDesc.updateExternalSettingsProviders(new String[] { PkgConfigExternalSettingProvider.ID });
@@ -392,7 +387,7 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 				};
 				j.setPriority(Job.INTERACTIVE);
 				j.schedule();
-
+				
 				try {
 					CoreModel.getDefault().setProjectDescription(
 							this.page.getProject(), projDesc);

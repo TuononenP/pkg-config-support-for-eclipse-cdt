@@ -1,4 +1,10 @@
-1.0.3
+1.0.0-2016-12-11
+* Duplicate entries of include paths, libraries and library paths should not be added.
+* Checking the package instantaneously adds includes etc and therefore user does not even click OK.
+* There was some problems when includes were not always added and only after selecting another package added includes for previously selected package. This should be fixed now.
+* Pkg-config external setting provider does not update after toolchain is changed (this is something I'm not sure all user's expect so I leave it out).
+* Includes etc are not removed after package is unchecked.
+1.0.0-2016-12-10
 * Fixed null exception in Activator and added error handling also elsewhere.
 1.0.0
  * Made pkg-config another "tool" of a toolchain, so that Eclipse plugins registering toolchains can specify the path to a toolchain-specific pkg-config binary along with the path to other

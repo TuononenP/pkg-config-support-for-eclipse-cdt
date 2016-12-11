@@ -11,6 +11,7 @@
 package org.eclipse.cdt.managedbuilder.pkgconfig.settings;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,31 +93,56 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 			int settingEntry) {
 		String[] values = null;
 		ICLanguageSettingEntry[] newEntries = null;
+		ICLanguageSettingEntry[] existingEntries = null;
+		ICLanguageSettingEntry[] distinctEntries = null;
 		ICLanguageSetting lang = getGCCLanguageSetting(proj);
 		if (lang != null) {
 			switch (settingEntry) {
 			case ICSettingEntry.INCLUDE_PATH:
 				values = getIncludePathsFromCheckedPackages(proj);
 				newEntries = formIncludePathEntries(values);
-				lang.setSettingEntries(ICSettingEntry.INCLUDE_PATH, newEntries);
+				existingEntries = lang.getSettingEntries(ICSettingEntry.INCLUDE_PATH);
+				distinctEntries = distinctICLanguageEntries(existingEntries, newEntries);
+				lang.setSettingEntries(ICSettingEntry.INCLUDE_PATH, distinctEntries);
 				break;
 			case ICSettingEntry.LIBRARY_FILE:
 				values = getLibraryFilesFromCheckedPackages(proj);
 				newEntries = formLibraryFileEntries(values);
-				lang.setSettingEntries(ICSettingEntry.LIBRARY_FILE, newEntries);
+				existingEntries = lang.getSettingEntries(ICSettingEntry.LIBRARY_FILE);
+				distinctEntries = distinctICLanguageEntries(existingEntries, newEntries);
+				lang.setSettingEntries(ICSettingEntry.LIBRARY_FILE, distinctEntries);
 				break;
 			case ICSettingEntry.LIBRARY_PATH:
 				values = getLibraryPathsFromCheckedPackages(proj);
 				newEntries = formLibraryPathEntries(values);
-				lang.setSettingEntries(ICSettingEntry.LIBRARY_PATH, newEntries);
+				existingEntries = lang.getSettingEntries(ICSettingEntry.LIBRARY_PATH);
+				distinctEntries = distinctICLanguageEntries(existingEntries, newEntries);
+				lang.setSettingEntries(ICSettingEntry.LIBRARY_PATH, distinctEntries);
 				break;
 			default:
 				break;
 			}
 		}
-		return newEntries;
+		return distinctEntries;
 	}
 
+	/**
+	 * Makes sure duplicate entries are not added.
+	 *
+	 */
+	private static ICLanguageSettingEntry[] distinctICLanguageEntries(ICLanguageSettingEntry[] existingEntries, ICLanguageSettingEntry[] newEntries) {
+		// add to distinct entries if new entry is not found in existing entries
+		List<ICLanguageSettingEntry> listOfExistingEntries = Arrays.asList(existingEntries);
+		List<ICLanguageSettingEntry> distinctEntries = new ArrayList<ICLanguageSettingEntry>();
+		Collections.addAll(distinctEntries, existingEntries);
+		for (ICLanguageSettingEntry newEntry : newEntries) {
+			if (listOfExistingEntries.contains(newEntry) == false) {
+				distinctEntries.add(newEntry);
+			}
+		}
+		return distinctEntries.toArray(new ICLanguageSettingEntry[distinctEntries.size()]);
+	}
+	
 	/**
 	 * Get language settings for given project and language id.
 	 * 
