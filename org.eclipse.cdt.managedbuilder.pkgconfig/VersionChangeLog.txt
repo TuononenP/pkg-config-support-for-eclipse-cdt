@@ -1,3 +1,5 @@
+1.0.3
+* Fixed null exception in Activator and added error handling also elsewhere.
 1.0.0
  * Made pkg-config another "tool" of a toolchain, so that Eclipse plugins registering toolchains can specify the path to a toolchain-specific pkg-config binary along with the path to other
 traditional tools (compilers, etc). 
