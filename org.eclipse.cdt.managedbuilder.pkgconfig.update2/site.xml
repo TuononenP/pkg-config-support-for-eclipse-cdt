@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<site>
-   <feature url="features/org.eclipse.cdt.managedbuilder.pkgconfig.feature_1.0.3.201612111256.jar" id="org.eclipse.cdt.managedbuilder.pkgconfig.feature" version="1.0.3.201612111256">
-      <category name="Pkg-config"/>
-   </feature>
-   <category-def name="Pkg-config" label="Pkg-config"/>
-</site>

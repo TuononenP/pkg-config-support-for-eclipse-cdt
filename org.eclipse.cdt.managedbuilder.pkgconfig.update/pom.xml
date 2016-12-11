@@ -8,11 +8,11 @@
 	<parent>
 		<groupId>org.eclipse.cdt.managedbuilder.pkgconfig.parent</groupId>
 		<artifactId>pkgconfig-parent</artifactId>
-		<version>1.0.3-SNAPSHOT</version>
+		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../org.eclipse.cdt.managedbuilder.pkgconfig.build</relativePath>
 	</parent>
 
 	<artifactId>org.eclipse.cdt.managedbuilder.pkgconfig.update</artifactId>
 	<packaging>eclipse-repository</packaging>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 </project>

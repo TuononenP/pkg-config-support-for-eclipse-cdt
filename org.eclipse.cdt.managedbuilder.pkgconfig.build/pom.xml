@@ -11,7 +11,7 @@
 
 	<groupId>org.eclipse.cdt.managedbuilder.pkgconfig.parent</groupId>
 	<artifactId>pkgconfig-parent</artifactId>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Pkg-config support</name>
