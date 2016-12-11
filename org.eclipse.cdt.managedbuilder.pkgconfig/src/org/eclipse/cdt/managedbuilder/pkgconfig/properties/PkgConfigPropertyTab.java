@@ -82,7 +82,8 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 
 	private SashForm sashForm;
 
-	private static final String[] BUTTONS = new String[] { "Select", //$NON-NLS-1$
+	private static final String[] BUTTONS = new String[] { 
+			"Select", //$NON-NLS-1$
 			"Deselect", //$NON-NLS-1$
 			"Advanced..." //$NON-NLS-1$
 	};
