@@ -94,6 +94,8 @@ This Agreement is governed by the laws of the State of New York and the intellec
       <import plugin="org.eclipse.core.resources"/>
       <import plugin="org.eclipse.cdt.managedbuilder.core"/>
       <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.eclipse.cdt.core" version="5.3.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.cdt.ui" version="5.3.0" match="greaterOrEqual"/>
    </requires>
 
    <plugin
