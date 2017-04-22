@@ -29,7 +29,7 @@ import org.eclipse.core.runtime.IStatus;
 public class PathToToolOption {
 
 	//tool input extensions
-	private static final String[] inputTypes = {"cpp", "c"};  //$NON-NLS-1$ //$NON-NLS-2$
+	private static final String[] inputTypes = {"C", "c++", "cc", "cpp", "cxx"};  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ 
 	
 	private final static String OtherFlagsOptionName = "Other flags"; //$NON-NLS-1$
 
