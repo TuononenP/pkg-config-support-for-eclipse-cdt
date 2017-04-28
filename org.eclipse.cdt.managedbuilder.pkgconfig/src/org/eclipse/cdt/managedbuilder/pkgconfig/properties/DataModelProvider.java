@@ -21,14 +21,13 @@ import org.eclipse.cdt.managedbuilder.pkgconfig.util.PkgConfigUtil;
 
 public class DataModelProvider {
 
-	List<DataModel> dms;
+	private List<DataModel> dms = new ArrayList<DataModel>();
 
 	/**
 	 * Initialize.
 	 * @param project Project
 	 */
 	DataModelProvider(String project) {
-		this.dms = new ArrayList<DataModel>();
 
 		List<String> packages = PkgConfigUtil.getAllPackages(project);
 		List<String> pkgList = Parser.parsePackageList(packages);
