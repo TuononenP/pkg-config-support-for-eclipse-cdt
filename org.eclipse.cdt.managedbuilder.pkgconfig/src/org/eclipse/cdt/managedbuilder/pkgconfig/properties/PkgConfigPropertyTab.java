@@ -224,10 +224,17 @@ public class PkgConfigPropertyTab extends AbstractCPropertyTab {
 			// handle options
 			String cflags = PkgConfigUtil.getCflags(item.toString(),
 					proj.getName());
-			String[] optionsArray = Parser.parseCflagOptions(cflags);
+			String[] optionsArray = Parser.parseCflagOtherFlagsOptions(cflags);
 			if (optionsArray != null) {
 				for (String option : optionsArray) {
 					PathToToolOption.addOtherFlag(option, proj);
+				}
+			}
+			
+			optionsArray = Parser.parseCflagDefinedSymbolsOptions(cflags);
+			if (optionsArray != null) {
+				for (String option : optionsArray) {
+					PathToToolOption.addDefinedSymbol(option, proj);
 				}
 			}
 		}

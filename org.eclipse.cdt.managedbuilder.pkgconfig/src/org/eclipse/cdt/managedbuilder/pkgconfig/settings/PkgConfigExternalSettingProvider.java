@@ -74,7 +74,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 					null,
 					new String[] { "org.eclipse.cdt.managedbuilder.core.compiledObjectFile" }, null, libPaths); //$NON-NLS-1$
 
-			addOtherFlagsToTools(proj);
+			addCFlagsToTools(proj);
 
 			return new CExternalSetting[] { includeSettings,
 					libraryFileSettings, libraryPathSettings };
@@ -314,6 +314,28 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * @param proj
 	 * @return
 	 */
+	static String[] getDefinedSymbolsFromCheckedPackages(IProject proj) {
+		List<String> definedSymbols = new ArrayList<String>();
+		String[] pkgs = getCheckedPackageNames(proj);
+		String cflags = null;
+		String[] definedSymbolsArray = null;
+		for (String pkg : pkgs) {
+			cflags = PkgConfigUtil.getCflags(proj.getName(), pkg);
+			definedSymbolsArray = Parser.parseCflagDefinedSymbolsOptions(cflags);
+			if (definedSymbolsArray != null) {
+				Collections.addAll(definedSymbols, definedSymbolsArray);
+			}
+		}
+		return definedSymbols.toArray(new String[definedSymbols.size()]);
+	}
+	
+	
+	/**
+	 * Get other flags from the checked packages.
+	 * 
+	 * @param proj
+	 * @return
+	 */
 	static String[] getOtherFlagsFromCheckedPackages(IProject proj) {
 		List<String> otherFlagList = new ArrayList<String>();
 		String[] pkgs = getCheckedPackageNames(proj);
@@ -321,7 +343,7 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 		String[] otherFlagArray = null;
 		for (String pkg : pkgs) {
 			cflags = PkgConfigUtil.getCflags(proj.getName(), pkg);
-			otherFlagArray = Parser.parseCflagOptions(cflags);
+			otherFlagArray = Parser.parseCflagOtherFlagsOptions(cflags);
 			if (otherFlagArray != null) {
 				Collections.addAll(otherFlagList, otherFlagArray);
 			}
@@ -334,13 +356,17 @@ public class PkgConfigExternalSettingProvider extends CExternalSettingProvider {
 	 * 
 	 * @param proj
 	 */
-	private static void addOtherFlagsToTools(final IProject proj) {
-		Job j = new Job("Add other flags") { //$NON-NLS-1$
+	private static void addCFlagsToTools(final IProject proj) {
+		Job j = new Job("Add cflags") { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				String[] flags = getOtherFlagsFromCheckedPackages(proj);
 				for (String flag : flags) {
 					PathToToolOption.addOtherFlag(flag, proj);
+				}
+				flags = getDefinedSymbolsFromCheckedPackages(proj);
+				for (String flag : flags) {
+					PathToToolOption.addDefinedSymbol(flag, proj);
 				}
 				return Status.OK_STATUS;
 			}

@@ -11,8 +11,11 @@
 package org.eclipse.cdt.managedbuilder.pkgconfig.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.cdt.managedbuilder.core.BuildException;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
 import org.eclipse.cdt.managedbuilder.core.IOption;
@@ -32,6 +35,8 @@ public class PathToToolOption {
 	private static final String[] inputTypes = {"C", "c++", "cc", "cpp", "cxx"};  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ 
 	
 	private final static String OtherFlagsOptionName = "Other flags"; //$NON-NLS-1$
+	
+	private final static String DefinedSymbolsOptionName = "Defined symbols (-D)"; //$NON-NLS-1$
 
 	/**
 	 * Adds new other flag to Compiler's Other flags option.
@@ -44,6 +49,21 @@ public class PathToToolOption {
 			if (cf != null) {
 				//Add path to compiler's Other flags Option
 				addOtherFlagToToolOption(cf, otherFlag);
+			}
+		}
+	}
+	
+	/**
+	 * Adds new defined symbol to Compiler's defined symbols option.
+	 * 
+	 * @param definedSymbol Defined Symbols to added 
+	 */
+	public static void addDefinedSymbol(String definedSymbol, IProject proj) {
+		if (proj != null && (definedSymbol.length()>0)) {
+			IConfiguration cf = getActiveBuildConf(proj);
+			if (cf != null) {
+				//Add defined symbol to compiler's settings
+				addDefinedSymbolToToolOption(cf, definedSymbol);
 			}
 		}
 	}
@@ -63,8 +83,31 @@ public class PathToToolOption {
 			IOption otherFlagOption = getCompilerOtherFlagsOption(cf);
 			if (otherFlagOption != null) {
 				//add other flag to compiler's Other flags Option type
-				boolean val = addOtherFlagToToolOption(cf, compiler, otherFlagOption, otherFlag);
-				return val;
+				return addOtherFlagToToolOption(cf, compiler, otherFlagOption, otherFlag);
+			}
+			return false;
+		} 
+		//adding the other flag failed
+		return false;
+	}
+	
+	
+	/**
+	 * Adds a Defined symbol to compiler's Settings.
+	 * 
+	 * @param cf IConfiguration Build configuration
+	 * @param definedSymbol Defined symbol to be added 
+	 * @return boolean Returns true if Defined symbols Option was added successfully to the compiler.
+	 */
+	private static boolean addDefinedSymbolToToolOption(IConfiguration cf, String definedSymbol) {
+		ITool compiler = getCompiler(cf);
+		//If the compiler is found from the given build configuration
+		if (compiler != null) {
+			//get compiler's Other flags option
+			IOption definedSymbolsOption = getCompilerDefinedSymbolsOption(cf);
+			if (definedSymbolsOption != null) {
+				//add other flag to compiler's Other flags Option type
+				return addDefinedSymbolToToolOption(cf, compiler, definedSymbolsOption, definedSymbol);
 			}
 			return false;
 		} 
@@ -82,7 +125,15 @@ public class PathToToolOption {
 	 * @since 8.0
 	 */
 	private static boolean addOtherFlagToToolOption(IConfiguration cf, ITool cfTool, IOption option, String newOtherFlag) {
-		String flags = option.getValue().toString();
+		String flags = null;
+		try {
+			flags = option.getStringValue();
+		} catch (BuildException e1) {
+			Activator
+			.getDefault()
+			.log(e1,
+					String.format("Unable to retrieve option value for %1$s", option.getName())); //$NON-NLS-1$
+		}
 		if (flags == null) {
 			flags = ""; //$NON-NLS-1$
 		}
@@ -92,11 +143,64 @@ public class PathToToolOption {
 			flags = flags+" "+newOtherFlag; //$NON-NLS-1$
 
 			//add a new other flag to compiler's other flags option.
-				ManagedBuildManager.setOption(cf, cfTool, option, flags);
-		} else {
-			return false;
+			IOption opt = ManagedBuildManager.setOption(cf, cfTool, option, flags);
+			try {
+				return opt.getStringValue().contains(newOtherFlag);
+			}catch(BuildException e) {
+				Activator
+				.getDefault()
+				.log(e,
+						String.format("Unable to update %1$s, flags=%2$s, value=%3$s not added", option.getName(),flags, newOtherFlag)); //$NON-NLS-1$
+				return false;
+			}
+			
+		} 
+		return flags.contains(newOtherFlag);
+	}
+	
+	
+	/**
+	 * Adds new defs flag to the Compiler's Other flags Option.
+	 * 
+	 * @param cf IConfiguration Build configuration
+	 * @param cfTool ITool Tool
+	 * @param option Tool Option type
+	 * @param newDefinedSymbol
+	 * @since 8.0
+	 */
+	private static boolean addDefinedSymbolToToolOption(IConfiguration cf, ITool cfTool, IOption option, String newDefinedSymbol) {
+		String[] flags = null;
+		try {
+			flags = option.getDefinedSymbols();
+		} catch (BuildException e1) {
+			Activator
+			.getDefault()
+			.log(e1,
+					String.format("Unable to retrieve option value for %1$s", option.getName())); //$NON-NLS-1$
 		}
-		return false;
+		if (flags == null) {
+			flags = new String[0]; 
+		}
+
+		List<String> oldFlags = Arrays.asList(flags);
+		if (!oldFlags.contains(newDefinedSymbol)) {//append the new flag to existing flags
+			ArrayList<String> newFlags = new ArrayList<String>(flags.length + 1);
+			Collections.addAll(newFlags, flags);
+			if(newFlags.add(newDefinedSymbol)) {
+				//add a new other flag to compiler's other flags option.
+				IOption opt = ManagedBuildManager.setOption(cf, cfTool, option, newFlags.toArray(new String[newFlags.size()]));
+				try {
+					return Arrays.asList(opt.getDefinedSymbols()).contains(newDefinedSymbol);
+				}catch(BuildException e) {
+					Activator
+					.getDefault()
+					.log(e,
+							String.format("Unable to update %1$s, flags=%2$s, value=%3$s not added", option.getName(),flags, newDefinedSymbol)); //$NON-NLS-1$
+					return false;
+				}
+			}
+		} 
+		return oldFlags.contains(newDefinedSymbol);
 	}
 
 	/**
@@ -139,6 +243,21 @@ public class PathToToolOption {
 		//get option id for other flags
 		String otherFlagsOptionId = getOptionIdByName(cfTool, OtherFlagsOptionName);
 		return getToolOptionType(cfTool, otherFlagsOptionId);
+	}
+	
+	
+	/**
+	 * Returns compiler's Defined symbols Option type.
+	 * 
+	 * @param cf IConfiguration Project build configuration
+	 * @return IOption Tool option type
+	 */
+	private static IOption getCompilerDefinedSymbolsOption(IConfiguration cf) {
+		//get ITool associated with the input extension
+		ITool cfTool = getCompiler(cf);
+		//get option id for other flags
+		String definedSymbolsOptionId = getOptionIdByName(cfTool, DefinedSymbolsOptionName);
+		return getToolOptionType(cfTool,definedSymbolsOptionId);
 	}
 
 	/**

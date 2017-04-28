@@ -29,13 +29,17 @@ public class Parser {
 	
 	// Regex for matching include path from "pkg-config --libs-only-l" command
 	private static Pattern libsRegex = Pattern.compile("(-l)([^/\\s]*)+");//$NON-NLS-1$
+	
+	// Regex for matching quoted strings
+	private static Pattern quotedStringRegex = Pattern.compile("[^\\\\s\\\"']+|\\\"([^\\\"]*)\\\"|'([^']*)'");//$NON-NLS-1$
+		
 	/**
-	 * Parses options from "pkg-config --cflags" input.
+	 * Parses options from "pkg-config --cflags" input for -Dproperty=value.
 	 * 
 	 * @param s Output from pkg-config.
 	 * @return Parsed String array.
 	 */
-	public static String[] parseCflagOptions(String s) throws NullPointerException {
+	public static String[] parseCflagDefinedSymbolsOptions(String s) throws NullPointerException {
 		if (s != null && !s.isEmpty()) {
 			String str = null;
 			//find the first index where include list starts, look for -I<unix-path>
@@ -43,8 +47,40 @@ public class Parser {
 			Matcher m = incPathRegex.matcher(s);
 			// removing matches leaving only the flags
 			str = m.replaceAll("").trim();//$NON-NLS-1$
-			// splitting on the spaces
-			return str.split(" ");//$NON-NLS-1$
+			
+			Matcher definedSymbolsMatches = quotedStringRegex.matcher(str);
+			ArrayList<String> definedSymbols = new ArrayList<String>();
+			while(definedSymbolsMatches.find() && (str = definedSymbolsMatches.group())!= null && !str.isEmpty()) {
+				if(str.startsWith("-D") && str.length() > 2) //$NON-NLS-1$
+					definedSymbols.add(str.substring(2,str.length()));
+			}
+			return definedSymbols.size()>0?definedSymbols.toArray(new String[definedSymbols.size()]):null;
+		}
+		return null;
+			
+	}
+	
+	/**
+	 * Parses options from "pkg-config --cflags" input for non -D property=value.
+	 * 
+	 * @param s Output from pkg-config.
+	 * @return Parsed String array.
+	 */
+	public static String[] parseCflagOtherFlagsOptions(String s) throws NullPointerException {
+		if (s != null && !s.isEmpty()) {
+			String str = null;
+			//find the first index where include list starts, look for -I<unix-path>
+			//Using regex (-I)(/[^/\s]*)+
+			Matcher m = incPathRegex.matcher(s);
+			// removing matches leaving only the flags
+			str = m.replaceAll("").trim();//$NON-NLS-1$
+			Matcher defMatches = quotedStringRegex.matcher(str);
+			ArrayList<String> flagsList = new ArrayList<String>();
+			while(defMatches.find() && (str = defMatches.group())!= null && !str.isEmpty()) {
+				if(!str.startsWith("-D")) //$NON-NLS-1$
+					flagsList.add(str);
+			}
+			return flagsList.size()>0?flagsList.toArray(new String[flagsList.size()]):null;
 		}
 		return null;
 			
